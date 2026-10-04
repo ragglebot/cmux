@@ -156,6 +156,15 @@ impl Wire {
     }
 }
 
+/// Every pane of a raw layout node.
+fn layout_panes(node: &Value) -> Vec<PaneId> {
+    match node["type"].as_str() {
+        Some("leaf") => node["pane"].as_u64().into_iter().collect(),
+        Some("split") => [layout_panes(&node["a"]), layout_panes(&node["b"])].concat(),
+        _ => node["panes"].as_array().into_iter().flatten().filter_map(Value::as_u64).collect(),
+    }
+}
+
 fn screens(tree: &Value) -> Vec<Value> {
     tree["workspaces"]
         .as_array()
@@ -605,6 +614,34 @@ fn app_column_accepts_new_columns_to_its_right() {
         "move-into-app",
         "app.column_locked",
     );
+    wire.mux.shutdown();
+}
+
+/// On an `appColumn` screen that is the lone app column (no `columns`), a
+/// tab from another workspace moved to a column anchored on the app pane,
+/// with no `after_column`, makes the first ordinary column right of it.
+#[test]
+fn lone_app_column_takes_a_first_column_from_another_workspace() {
+    let mut wire = Wire::new();
+    let (terminal, _) = wire.terminal_pane();
+    let created = wire.ensure_app(HOME, "appColumn", "open-home");
+    let screen_id = created["value"]["screen_id"].as_str().unwrap().to_string();
+    let (app, app_pane) = app_tab(&wire.screen(&screen_id));
+    assert!(wire.screen(&screen_id).get("columns").is_none());
+    wire.ok(json!({"cmd": "move-tab-to-column", "surface": terminal, "pane": app_pane}));
+    let raw = wire.screen(&screen_id);
+    let columns = raw["columns"].as_array().cloned().unwrap_or_default();
+    assert_eq!(columns.len(), 2, "{raw}");
+    assert_eq!(columns[0]["app"], HOME, "{raw}");
+    assert_eq!(columns[0]["sticky"], json!({"edge": "left", "mode": "docked"}));
+    assert!(columns[1].get("app").is_none(), "{raw}");
+    assert_eq!(wire.pane_of(app), app_pane, "the app tab stays in the app column");
+    let moved_pane = wire.pane_of(terminal);
+    assert_ne!(moved_pane, app_pane);
+    let column_of = |pane: PaneId| {
+        columns.iter().position(|column| layout_panes(&column["layout"]).contains(&pane))
+    };
+    assert_eq!(column_of(moved_pane), Some(1), "{raw}");
     wire.mux.shutdown();
 }
 
