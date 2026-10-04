@@ -59,7 +59,7 @@ public nonisolated struct AppInstallDraft: Sendable, Hashable {
     /// scopes never start checked: only an explicit user grant turns them on.
     public static func onByDefault(_ kind: AppScopeKind, tier: AppTier) -> Bool {
         if kind.isElevated { return false }
-        switch tier {
+        return switch tier {
         case .firstParty: true
         case .verified: kind.risk != .execute && kind.risk != .external
         case .unverified: kind.risk == .read
