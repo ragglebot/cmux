@@ -94,6 +94,12 @@ declare namespace Cmux {
   type Grant = { id: Cmux.GrantId; grantee: string; op_classes: Array<Cmux.OpClass>; approval: "none" | "per_call" | "per_session"; expires_at: number | null; revoked_at: number | null; created_from: "install" | "ui" | "automation" | "standing_rule" }
   type GrantId = string
   type GroupColor = "grey" | "blue" | "red" | "yellow" | "green" | "pink" | "purple" | "cyan" | "orange"
+  type HistoryEntry = { id: string; kind: "page" | "location" | "closed" | "command" | "agent"; at_ms: string; title: string; detail?: string; machine?: string; workspace?: string; available: boolean; current?: boolean; running?: boolean; url?: string; profile?: string; closed_kind?: "terminal_tab" | "browser_tab" | "screen" | "workspace"; cwd?: string; command?: string; exit_code?: number; session_id?: string; provider?: string }
+  type HistoryEntryList = { entries: Array<Cmux.HistoryEntry>; revision: string }
+  type HistoryRemoveResult = { removed: number }
+  type HistoryVisitRecordResult = { id: string }
+  type HistoryVisitSummary = { url: string; title: string | null; visit_count: number; last_visit_ms: string }
+  type HistoryVisitTitleResult = { updated: number }
   type HomeChief = { id: Cmux.ChiefId; owner_user: string; display_name: string; is_default: boolean; brain: "cloud"; main_conversation: Cmux.ConversationId | null; harness: string | null; rev: unknown; created_at: Cmux.Timestamp; updated_at: Cmux.Timestamp; archived_at: Cmux.Timestamp | null }
   type HomeConversationCommit = { rev: number; seq?: number; message_id?: Cmux.MessageId; change: string }
   type HomeConversationSettings = { wake_policy: "auto" | "mentions" | "all"; agent_budget: { turns: number; gap_ms: number }; history_visible: "all" | "since_join" }
@@ -649,6 +655,32 @@ interface CmuxGlobal {
     issue: {
       /** `github.issue.comment` (mutation, scope `github:external`): Comment on a GitHub issue or pull request as the cmux GitHub App installation. */
       comment: CmuxOp<{ connection: Cmux.ConnectionId; repo: string; issue: number; body: string; expected_revision?: string }, Cmux.MutationResult<string>>
+    }
+  }
+  history: {
+    /** `history.clear` (mutation, scope `history:write`) */
+    clear: CmuxOp<{ machine?: string; session?: string; kinds?: Array<"page" | "location" | "closed" | "command" | "agent">; range?: "hour" | "today" | "week" | "month" | "all"; since_ms?: string; profile?: string; local_day_start_ms?: string }, Cmux.MutationResult<Cmux.HistoryRemoveResult>>
+    entries: {
+      /** `history.entries.get` (read, scope `history:read`) */
+      get: CmuxOp<{ machine?: string; session?: string; id: string }, Cmux.HistoryEntry>
+      /** `history.entries.list` (read, scope `history:read`) */
+      list: CmuxOp<{ machine?: string; session?: string; kinds?: Array<"page" | "location" | "closed" | "command" | "agent">; text?: string; range?: "hour" | "today" | "week" | "month" | "all"; limit?: number; local_day_start_ms?: string }, Cmux.HistoryEntryList>
+      /** `history.entries.remove` (mutation, scope `history:write`) */
+      remove: CmuxOp<{ machine?: string; session?: string; ids: Array<string> }, Cmux.MutationResult<Cmux.HistoryRemoveResult>>
+    }
+    site: {
+      /** `history.site.remove` (mutation, scope `history:write`) */
+      remove: CmuxOp<{ machine?: string; session?: string; host: string; profile?: string }, Cmux.MutationResult<Cmux.HistoryRemoveResult>>
+    }
+    visit: {
+      /** `history.visit.record` (mutation, scope `history:write`) */
+      record: CmuxOp<{ machine?: string; session?: string; profile: string; url: string; title?: string; tab?: string; at_ms: string }, Cmux.MutationResult<Cmux.HistoryVisitRecordResult>>
+      /** `history.visit.remove` (mutation, scope `history:write`) */
+      remove: CmuxOp<{ machine?: string; session?: string; profile: string; url: string }, Cmux.MutationResult<Cmux.HistoryRemoveResult>>
+      /** `history.visit.summaries` (read, scope `history:read`) */
+      summaries: CmuxOp<{ machine?: string; session?: string; profile: string; limit?: number }, Array<Cmux.HistoryVisitSummary>>
+      /** `history.visit.title` (mutation, scope `history:write`) */
+      title: CmuxOp<{ machine?: string; session?: string; profile: string; url: string; title: string }, Cmux.MutationResult<Cmux.HistoryVisitTitleResult>>
     }
   }
   home: {

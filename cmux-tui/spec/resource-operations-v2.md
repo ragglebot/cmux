@@ -6,14 +6,14 @@ selectors, fields, results, errors, constraints, or stream types.
 
 ## Transported operations
 
-`cmux.protocol/2` transports 192 operations for exactly one local mux
+`cmux.protocol/2` transports 201 operations for exactly one local mux
 session. Cross-machine aggregation and provider lifecycle require a later
 broker protocol.
 
 | Class | Count | Semantics |
 | --- | ---: | --- |
-| `read` | 59 | Reads state and forbids an idempotency key |
-| `mutation` | 116 | Requires an idempotency key and returns a mutation result |
+| `read` | 62 | Reads state and forbids an idempotency key |
+| `mutation` | 122 | Requires an idempotency key and returns a mutation result |
 | `stream_open` | 5 | Opens a connection-owned typed stream |
 | `connection_control` | 12 | Changes only connection-local state |
 
@@ -34,6 +34,7 @@ correlation, and idempotency metadata.
 | `closed` | 2 | `closed.list`, `closed.reopen` |
 | `frontend_projection` | 2 | `frontend_projection.get`, `frontend_projection.put` |
 | `git` | 9 | `git.checkpoint.create`, `git.checkpoint.diff`, `git.checkpoint.get`, `git.checkpoint.list`, `git.checkpoint.pin`, `git.checkpoint.unpin`, `git.diff`, `git.files.search`, `git.status` |
+| `history` | 9 | `history.clear`, `history.entries.get`, `history.entries.list`, `history.entries.remove`, `history.site.remove`, `history.visit.record`, `history.visit.remove`, `history.visit.summaries`, `history.visit.title` |
 | `machine` | 2 | `machine.get`, `machine.list` |
 | `notification` | 4 | `notification.ack`, `notification.clear`, `notification.create`, `notification.list` |
 | `pairing_request` | 2 | `pairing_request.list`, `pairing_request.resolve` |

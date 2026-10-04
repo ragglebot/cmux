@@ -19,6 +19,7 @@ mod resource_content;
 mod resource_topology;
 mod rows;
 mod screen_changed;
+mod frontend_projections;
 pub(crate) mod screen_groups;
 mod session_paths;
 mod sticky_columns;
@@ -1014,6 +1015,12 @@ pub enum MuxEvent {
         personal_revision: u64,
     },
     BookmarksChanged(personal::BookmarksChange),
+    /// Session history changed (`history-v1`): the history revision and the
+    /// entry kinds that changed. Consumers re-read `history.entries.list`.
+    HistoryChanged {
+        revision: u64,
+        kinds: Vec<String>,
+    },
     Conversation(Arc<crate::conversation_store::ConversationEvent>),
     /// A durable terminal-registry mutation committed. Consumers use this as
     /// a barrier, then fetch `terminal-events` or a fresh snapshot.
@@ -2729,6 +2736,8 @@ pub struct Mux {
     prelaunched_terminals: Mutex<HashMap<String, terminal_work::PrelaunchedTerminal>>,
     #[cfg(unix)]
     pub(crate) image_pastes: crate::image_paste::ImagePasteStore,
+    /// The history module: page visits, hides and the merged read model.
+    pub(crate) history: crate::history::HistoryHost,
     pub(crate) surface_operation_admission: Arc<crate::server::ServerSurfaceOperationAdmission>,
     pairing: PairingBroker,
     #[cfg(test)]
@@ -3165,6 +3174,7 @@ impl Mux {
             prelaunched_terminals: Mutex::new(HashMap::new()),
             #[cfg(unix)]
             image_pastes: crate::image_paste::ImagePasteStore::default(),
+            history: crate::history::HistoryHost::default(),
             surface_operation_admission: Arc::new(
                 crate::server::ServerSurfaceOperationAdmission::default(),
             ),
@@ -3212,6 +3222,7 @@ impl Mux {
         mux.close_ephemeral_workspaces()?;
         mux.retry_pending_agent_hooks()?;
         crate::journal_hooks::start(&mux)?;
+        crate::history::start(&mux);
         Ok(mux)
     }
 
@@ -7292,53 +7303,6 @@ impl Mux {
             .events_after(revision - 1)?
             .into_iter()
             .find(|event| event.revision == revision))
-    }
-
-    pub fn get_frontend_projection(
-        &self,
-        frontend: &str,
-        scope: &str,
-        subject_key: &str,
-    ) -> anyhow::Result<Option<FrontendProjection>> {
-        self.workspace_registry.lock().unwrap().get_frontend_projection(
-            frontend,
-            scope,
-            subject_key,
-        )
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    pub fn put_frontend_projection(
-        &self,
-        mutation: &WorkspaceMutation,
-        frontend: &str,
-        scope: &str,
-        subject_key: &str,
-        schema_version: u32,
-        expected_projection_revision: Option<u64>,
-        projection: &Value,
-    ) -> anyhow::Result<ProjectionCommit> {
-        let mut registry = self.workspace_registry.lock().unwrap();
-        let commit = registry.put_frontend_projection(
-            mutation,
-            frontend,
-            scope,
-            subject_key,
-            schema_version,
-            expected_projection_revision,
-            projection,
-        )?;
-        if !commit.replayed {
-            self.emit(MuxEvent::FrontendProjectionChanged {
-                frontend: frontend.to_string(),
-                scope: scope.to_string(),
-                subject_key: subject_key.to_string(),
-                projection_revision: commit.projection.projection_revision,
-                origin: mutation.origin.clone(),
-                mutation_id: mutation.id.clone(),
-            });
-        }
-        Ok(commit)
     }
 
     pub(crate) fn resource_put_frontend_projection_selected(

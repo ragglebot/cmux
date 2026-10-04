@@ -1148,6 +1148,7 @@ dependencies = [
  "anyhow",
  "base64",
  "cmux-conversation",
+ "cmux-history",
  "cmux-layout-reducer",
  "cmux-local-auth",
  "cmux-pty",

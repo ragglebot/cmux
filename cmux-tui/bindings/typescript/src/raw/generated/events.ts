@@ -1,5 +1,5 @@
 /* This file is generated. Do not edit by hand. */
-/* cmux-tui mux protocol 12, IR 0edc0a3c7e51c1f0843d49e78b98ef01dea251fb14beeda82935fcf345a138a1. */
+/* cmux-tui mux protocol 12, IR 18aa84e3c86c80a11496bf95778d57cedee27ff5aabacf161cfc9d52382b704e. */
 
 
 import type * as T from "./types.js";
@@ -143,6 +143,12 @@ export type GraphicsStatusEvent = { event: "graphics-status" } & {
   "remaining"?: bigint;
   "retry_exhausted"?: boolean;
   "summary"?: string;
+};
+
+/** Protocol v12; emission: emitted; streams: subscribe. */
+export type HistoryChangedEvent = { event: "history-changed" } & {
+  "kinds": Array<string>;
+  "revision": bigint;
 };
 
 /** Protocol v6; emission: emitted; streams: subscribe. */
@@ -505,6 +511,7 @@ export type KnownCmuxEvent =
   | FrameEvent
   | FrontendProjectionChangedEvent
   | GraphicsStatusEvent
+  | HistoryChangedEvent
   | LayoutChangedEvent
   | MachineUsageChangedEvent
   | NotificationEvent
@@ -564,6 +571,7 @@ export type KnownSubscribeEvent =
   | EmptyEvent
   | FrontendProjectionChangedEvent
   | GraphicsStatusEvent
+  | HistoryChangedEvent
   | LayoutChangedEvent
   | MachineUsageChangedEvent
   | NotificationEvent

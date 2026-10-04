@@ -643,6 +643,7 @@ fn scope_help_for(
         "room" => Cow::Borrowed(ROOM_HELP),
         "closed" => Cow::Borrowed(scope_help::CLOSED_HELP),
         "git" => Cow::Borrowed(scope_help::GIT_HELP),
+        "history" => Cow::Borrowed(scope_help::HISTORY_HELP),
         "sidebar" => Cow::Borrowed(SIDEBAR_HELP),
         "pairing" => Cow::Borrowed(PAIRING_HELP),
         "projection" => Cow::Borrowed(PROJECTION_HELP),

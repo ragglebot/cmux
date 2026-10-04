@@ -529,6 +529,42 @@
       "scope": "github:external",
       "class": "mutation"
     },
+    "history.clear": {
+      "scope": "history:write",
+      "class": "mutation"
+    },
+    "history.entries.get": {
+      "scope": "history:read",
+      "class": "read"
+    },
+    "history.entries.list": {
+      "scope": "history:read",
+      "class": "read"
+    },
+    "history.entries.remove": {
+      "scope": "history:write",
+      "class": "mutation"
+    },
+    "history.site.remove": {
+      "scope": "history:write",
+      "class": "mutation"
+    },
+    "history.visit.record": {
+      "scope": "history:write",
+      "class": "mutation"
+    },
+    "history.visit.remove": {
+      "scope": "history:write",
+      "class": "mutation"
+    },
+    "history.visit.summaries": {
+      "scope": "history:read",
+      "class": "read"
+    },
+    "history.visit.title": {
+      "scope": "history:write",
+      "class": "mutation"
+    },
     "home.search": {
       "scope": "home:read",
       "class": "read"

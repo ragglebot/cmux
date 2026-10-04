@@ -1,10 +1,10 @@
 /* This file is generated. Do not edit by hand. */
-/* cmux-tui mux protocol 12, IR 0edc0a3c7e51c1f0843d49e78b98ef01dea251fb14beeda82935fcf345a138a1. */
+/* cmux-tui mux protocol 12, IR 18aa84e3c86c80a11496bf95778d57cedee27ff5aabacf161cfc9d52382b704e. */
 
 
 export const SDK_SCHEMA_VERSION = 2 as const;
 export const MUX_PROTOCOL_VERSION = 12 as const;
-export const SDK_IR_SHA256 = "0edc0a3c7e51c1f0843d49e78b98ef01dea251fb14beeda82935fcf345a138a1" as const;
+export const SDK_IR_SHA256 = "18aa84e3c86c80a11496bf95778d57cedee27ff5aabacf161cfc9d52382b704e" as const;
 export const PROTOCOL = {
   "id_type": "uint64",
   "javascript_id_policy": "All protocol identifiers are uint64 JSON numbers. JavaScript and TypeScript SDKs must decode them losslessly as bigint (or validated decimal strings at their public boundary), and must not expose IEEE-754 number ids. Pairing request ids, revisions, timestamps, frame sequences, and reservation ids follow the same rule.",
@@ -2773,6 +2773,14 @@ export const EVENT_METADATA = {
   "graphics-status": {
     "since": 10,
     "capability": null,
+    "streams": [
+      "subscribe"
+    ],
+    "emission": "emitted"
+  },
+  "history-changed": {
+    "since": 12,
+    "capability": "history-v1",
     "streams": [
       "subscribe"
     ],
@@ -19973,6 +19981,39 @@ export const EVENT_SCHEMAS: Readonly<Record<string, TypeSchema>> = {
         "type": {
           "kind": "scalar",
           "name": "string"
+        }
+      }
+    },
+    "kind": "object"
+  },
+  "history-changed": {
+    "additional_properties": false,
+    "fields": {
+      "event": {
+        "nullable": false,
+        "presence": "required",
+        "type": {
+          "kind": "literal",
+          "value": "history-changed"
+        }
+      },
+      "kinds": {
+        "nullable": false,
+        "presence": "required",
+        "type": {
+          "items": {
+            "kind": "scalar",
+            "name": "string"
+          },
+          "kind": "array"
+        }
+      },
+      "revision": {
+        "nullable": false,
+        "presence": "required",
+        "type": {
+          "kind": "scalar",
+          "name": "uint64"
         }
       }
     },

@@ -7453,6 +7453,258 @@
         }
       },
       "extra": false
+    },
+    "HistoryEntry": {
+      "kind": "object",
+      "fields": {
+        "id": {
+          "required": true,
+          "type": {
+            "kind": "primitive",
+            "name": "string"
+          },
+          "description": "Qualified id: page:<profile>:<visit>, agent:<machine>/<provider>/<session>, command:<machine>/<terminal>/<start ms>, closed:daemon:<id> or location:<machine>:<tab>:<index>."
+        },
+        "kind": {
+          "required": true,
+          "type": {
+            "kind": "enum",
+            "values": [
+              "page",
+              "location",
+              "closed",
+              "command",
+              "agent"
+            ]
+          }
+        },
+        "at_ms": {
+          "required": true,
+          "type": {
+            "kind": "primitive",
+            "name": "decimal"
+          },
+          "description": "Visit, last activity, start or close time in Unix milliseconds."
+        },
+        "title": {
+          "required": true,
+          "type": {
+            "kind": "primitive",
+            "name": "string"
+          },
+          "description": "English title for the CLI; pages localize agent titles from provider and cwd."
+        },
+        "detail": {
+          "required": false,
+          "type": {
+            "kind": "primitive",
+            "name": "string"
+          }
+        },
+        "machine": {
+          "required": false,
+          "type": {
+            "kind": "primitive",
+            "name": "string"
+          },
+          "description": "Machine name; absent for this machine."
+        },
+        "workspace": {
+          "required": false,
+          "type": {
+            "kind": "primitive",
+            "name": "string"
+          }
+        },
+        "available": {
+          "required": true,
+          "type": {
+            "kind": "primitive",
+            "name": "boolean"
+          }
+        },
+        "current": {
+          "required": false,
+          "type": {
+            "kind": "primitive",
+            "name": "boolean"
+          },
+          "description": "Location: the trail cursor."
+        },
+        "running": {
+          "required": false,
+          "type": {
+            "kind": "primitive",
+            "name": "boolean"
+          },
+          "description": "Agent: the session has not ended."
+        },
+        "url": {
+          "required": false,
+          "type": {
+            "kind": "primitive",
+            "name": "string"
+          }
+        },
+        "profile": {
+          "required": false,
+          "type": {
+            "kind": "primitive",
+            "name": "string"
+          }
+        },
+        "closed_kind": {
+          "required": false,
+          "type": {
+            "kind": "enum",
+            "values": [
+              "terminal_tab",
+              "browser_tab",
+              "screen",
+              "workspace"
+            ]
+          }
+        },
+        "cwd": {
+          "required": false,
+          "type": {
+            "kind": "primitive",
+            "name": "string"
+          }
+        },
+        "command": {
+          "required": false,
+          "type": {
+            "kind": "primitive",
+            "name": "string"
+          }
+        },
+        "exit_code": {
+          "required": false,
+          "type": {
+            "kind": "primitive",
+            "name": "int32"
+          }
+        },
+        "session_id": {
+          "required": false,
+          "type": {
+            "kind": "primitive",
+            "name": "string"
+          }
+        },
+        "provider": {
+          "required": false,
+          "type": {
+            "kind": "primitive",
+            "name": "string"
+          },
+          "description": "Agent hook adapter id, for the localized title."
+        }
+      },
+      "extra": false
+    },
+    "HistoryEntryList": {
+      "kind": "object",
+      "fields": {
+        "entries": {
+          "required": true,
+          "type": {
+            "kind": "array",
+            "items": {
+              "kind": "ref",
+              "name": "HistoryEntry"
+            }
+          }
+        },
+        "revision": {
+          "required": true,
+          "type": {
+            "kind": "primitive",
+            "name": "decimal"
+          },
+          "description": "The history revision."
+        }
+      },
+      "extra": false
+    },
+    "HistoryRemoveResult": {
+      "kind": "object",
+      "fields": {
+        "removed": {
+          "required": true,
+          "type": {
+            "kind": "primitive",
+            "name": "uint32"
+          }
+        }
+      },
+      "extra": false
+    },
+    "HistoryVisitTitleResult": {
+      "kind": "object",
+      "fields": {
+        "updated": {
+          "required": true,
+          "type": {
+            "kind": "primitive",
+            "name": "uint32"
+          },
+          "description": "Visits whose title changed: 0 or 1."
+        }
+      },
+      "extra": false
+    },
+    "HistoryVisitRecordResult": {
+      "kind": "object",
+      "fields": {
+        "id": {
+          "required": true,
+          "type": {
+            "kind": "primitive",
+            "name": "string"
+          },
+          "description": "The visit's history entry id."
+        }
+      },
+      "extra": false
+    },
+    "HistoryVisitSummary": {
+      "kind": "object",
+      "fields": {
+        "url": {
+          "required": true,
+          "type": {
+            "kind": "primitive",
+            "name": "string"
+          }
+        },
+        "title": {
+          "required": true,
+          "type": {
+            "kind": "nullable",
+            "value": {
+              "kind": "primitive",
+              "name": "string"
+            }
+          }
+        },
+        "visit_count": {
+          "required": true,
+          "type": {
+            "kind": "primitive",
+            "name": "uint32"
+          }
+        },
+        "last_visit_ms": {
+          "required": true,
+          "type": {
+            "kind": "primitive",
+            "name": "decimal"
+          }
+        }
+      },
+      "extra": false
     }
   },
   "generics": {
@@ -7830,7 +8082,8 @@
                 "screen_group",
                 "closed",
                 "window_record",
-                "git_checkpoint"
+                "git_checkpoint",
+                "history"
               ]
             }
           },
@@ -10619,6 +10872,617 @@
         "selector.invalid",
         "selector.not_found",
         "selector.wrong_parent",
+        "validation.invalid"
+      ]
+    },
+    "history.clear": {
+      "class": "mutation",
+      "idempotency": "required",
+      "target": "session",
+      "ancestors": [
+        "machine"
+      ],
+      "params": {
+        "selectors": {
+          "machine": "required",
+          "session": "required"
+        },
+        "fields": {
+          "kinds": {
+            "required": false,
+            "type": {
+              "kind": "array",
+              "items": {
+                "kind": "enum",
+                "values": [
+                  "page",
+                  "location",
+                  "closed",
+                  "command",
+                  "agent"
+                ]
+              },
+              "max_items": 5
+            },
+            "description": "Entry kinds to include; omitted or empty means every kind."
+          },
+          "range": {
+            "required": false,
+            "type": {
+              "kind": "enum",
+              "values": [
+                "hour",
+                "today",
+                "week",
+                "month",
+                "all"
+              ]
+            },
+            "description": "Clears everything from the range's start until now. Required unless since_ms is given."
+          },
+          "since_ms": {
+            "required": false,
+            "type": {
+              "kind": "primitive",
+              "name": "decimal"
+            },
+            "description": "Unix milliseconds; when given it replaces range as the start: visits at or after it."
+          },
+          "profile": {
+            "required": false,
+            "type": {
+              "kind": "primitive",
+              "name": "string",
+              "min_length": 1,
+              "max_length": 256
+            },
+            "description": "Browser profile wire id. Limits page deletion to one profile."
+          },
+          "local_day_start_ms": {
+            "required": false,
+            "type": {
+              "kind": "primitive",
+              "name": "decimal"
+            },
+            "description": "The local start of today in Unix milliseconds, from the caller's time zone, for the today range. Omitted: the daemon's local midnight."
+          }
+        },
+        "extra": false,
+        "constraints": [
+          "Canonical: cmux.history.clear.",
+          "Give range, since_ms or both; since_ms wins. Page visits in the range are deleted; agent and command entries are hidden by range; closed and location entries are never touched. removed counts deleted visits."
+        ]
+      },
+      "result": {
+        "kind": "apply",
+        "name": "MutationResult",
+        "arguments": [
+          {
+            "kind": "ref",
+            "name": "HistoryRemoveResult"
+          }
+        ]
+      },
+      "errors": [
+        "idempotency.conflict",
+        "operation.failed",
+        "selector.ambiguous",
+        "selector.invalid",
+        "selector.not_found",
+        "validation.invalid"
+      ]
+    },
+    "history.entries.get": {
+      "class": "read",
+      "idempotency": "forbidden",
+      "target": "session",
+      "ancestors": [
+        "machine"
+      ],
+      "params": {
+        "selectors": {
+          "machine": "required",
+          "session": "required"
+        },
+        "fields": {
+          "id": {
+            "required": true,
+            "type": {
+              "kind": "primitive",
+              "name": "string",
+              "min_length": 1,
+              "max_length": 1024
+            },
+            "description": "A history entry id."
+          }
+        },
+        "extra": false,
+        "constraints": [
+          "Canonical: cmux.history.entries.get.",
+          "An entry that is gone is resource.not_found with scope history."
+        ]
+      },
+      "result": {
+        "kind": "ref",
+        "name": "HistoryEntry"
+      },
+      "errors": [
+        "operation.failed",
+        "resource.not_found",
+        "selector.ambiguous",
+        "selector.invalid",
+        "selector.not_found",
+        "validation.invalid"
+      ]
+    },
+    "history.entries.list": {
+      "class": "read",
+      "idempotency": "forbidden",
+      "target": "session",
+      "ancestors": [
+        "machine"
+      ],
+      "params": {
+        "selectors": {
+          "machine": "required",
+          "session": "required"
+        },
+        "fields": {
+          "kinds": {
+            "required": false,
+            "type": {
+              "kind": "array",
+              "items": {
+                "kind": "enum",
+                "values": [
+                  "page",
+                  "location",
+                  "closed",
+                  "command",
+                  "agent"
+                ]
+              },
+              "max_items": 5
+            },
+            "description": "Entry kinds to include; omitted or empty means every kind."
+          },
+          "text": {
+            "required": false,
+            "type": {
+              "kind": "primitive",
+              "name": "string",
+              "max_length": 1024
+            },
+            "description": "Search text: every whitespace-separated token must appear in the entry, case, diacritic and width insensitive."
+          },
+          "range": {
+            "required": false,
+            "type": {
+              "kind": "enum",
+              "values": [
+                "hour",
+                "today",
+                "week",
+                "month",
+                "all"
+              ]
+            },
+            "default": "all",
+            "description": "Time range ending now."
+          },
+          "limit": {
+            "required": false,
+            "type": {
+              "kind": "primitive",
+              "name": "uint32",
+              "minimum": 1,
+              "maximum": 5000
+            },
+            "default": 200
+          },
+          "local_day_start_ms": {
+            "required": false,
+            "type": {
+              "kind": "primitive",
+              "name": "decimal"
+            },
+            "description": "The local start of today in Unix milliseconds, from the caller's time zone, for the today range. Omitted: the daemon's local midnight."
+          }
+        },
+        "extra": false,
+        "constraints": [
+          "Canonical: cmux.history.entries.list.",
+          "Entries are newest first by at_ms, then id; revision is the history revision that history-changed carries."
+        ]
+      },
+      "result": {
+        "kind": "ref",
+        "name": "HistoryEntryList"
+      },
+      "errors": [
+        "operation.failed",
+        "selector.ambiguous",
+        "selector.invalid",
+        "selector.not_found",
+        "validation.invalid"
+      ]
+    },
+    "history.entries.remove": {
+      "class": "mutation",
+      "idempotency": "required",
+      "target": "session",
+      "ancestors": [
+        "machine"
+      ],
+      "params": {
+        "selectors": {
+          "machine": "required",
+          "session": "required"
+        },
+        "fields": {
+          "ids": {
+            "required": true,
+            "type": {
+              "kind": "array",
+              "items": {
+                "kind": "primitive",
+                "name": "string",
+                "min_length": 1,
+                "max_length": 1024
+              },
+              "min_items": 1,
+              "max_items": 1000
+            },
+            "description": "History entry ids."
+          }
+        },
+        "extra": false,
+        "constraints": [
+          "Canonical: cmux.history.entries.remove.",
+          "Page visits are deleted; agent and command entries are hidden; closed entries are left to age out; any location id refuses the whole request with operation.failed reason history.location_client_owned (the app owns the trail)."
+        ]
+      },
+      "result": {
+        "kind": "apply",
+        "name": "MutationResult",
+        "arguments": [
+          {
+            "kind": "ref",
+            "name": "HistoryRemoveResult"
+          }
+        ]
+      },
+      "errors": [
+        "idempotency.conflict",
+        "operation.failed",
+        "selector.ambiguous",
+        "selector.invalid",
+        "selector.not_found",
+        "validation.invalid"
+      ]
+    },
+    "history.site.remove": {
+      "class": "mutation",
+      "idempotency": "required",
+      "target": "session",
+      "ancestors": [
+        "machine"
+      ],
+      "params": {
+        "selectors": {
+          "machine": "required",
+          "session": "required"
+        },
+        "fields": {
+          "host": {
+            "required": true,
+            "type": {
+              "kind": "primitive",
+              "name": "string",
+              "min_length": 1,
+              "max_length": 253
+            },
+            "description": "Removes visits of this host and its subdomains."
+          },
+          "profile": {
+            "required": false,
+            "type": {
+              "kind": "primitive",
+              "name": "string",
+              "min_length": 1,
+              "max_length": 256
+            },
+            "description": "Browser profile wire id. Omitted: every profile."
+          }
+        },
+        "extra": false,
+        "constraints": [
+          "Canonical: cmux.history.site.remove."
+        ]
+      },
+      "result": {
+        "kind": "apply",
+        "name": "MutationResult",
+        "arguments": [
+          {
+            "kind": "ref",
+            "name": "HistoryRemoveResult"
+          }
+        ]
+      },
+      "errors": [
+        "idempotency.conflict",
+        "operation.failed",
+        "selector.ambiguous",
+        "selector.invalid",
+        "selector.not_found",
+        "validation.invalid"
+      ]
+    },
+    "history.visit.record": {
+      "class": "mutation",
+      "idempotency": "required",
+      "target": "session",
+      "ancestors": [
+        "machine"
+      ],
+      "params": {
+        "selectors": {
+          "machine": "required",
+          "session": "required"
+        },
+        "fields": {
+          "profile": {
+            "required": true,
+            "type": {
+              "kind": "primitive",
+              "name": "string",
+              "min_length": 1,
+              "max_length": 256
+            },
+            "description": "Browser profile wire id."
+          },
+          "url": {
+            "required": true,
+            "type": {
+              "kind": "primitive",
+              "name": "string",
+              "min_length": 1,
+              "max_length": 8192
+            },
+            "description": "The finished main-frame URL."
+          },
+          "title": {
+            "required": false,
+            "type": {
+              "kind": "primitive",
+              "name": "string",
+              "max_length": 1024
+            }
+          },
+          "tab": {
+            "required": false,
+            "type": {
+              "kind": "primitive",
+              "name": "string",
+              "min_length": 1,
+              "max_length": 256
+            },
+            "description": "The tab that visited it, <machine>/<tab id>, when the reporter knows it."
+          },
+          "at_ms": {
+            "required": true,
+            "type": {
+              "kind": "primitive",
+              "name": "decimal"
+            },
+            "description": "Visit time in Unix milliseconds."
+          }
+        },
+        "extra": false,
+        "constraints": [
+          "Canonical: cmux.history.visit.record.",
+          "Accepted only from the app that hosts the browser (a connection whose set-client-info kind is frontend); others get operation.failed reason hosting_app_required. The app reports each finished main-frame navigation. Visits older than 90 days and beyond 100,000 per profile are pruned."
+        ]
+      },
+      "result": {
+        "kind": "apply",
+        "name": "MutationResult",
+        "arguments": [
+          {
+            "kind": "ref",
+            "name": "HistoryVisitRecordResult"
+          }
+        ]
+      },
+      "errors": [
+        "idempotency.conflict",
+        "operation.failed",
+        "selector.ambiguous",
+        "selector.invalid",
+        "selector.not_found",
+        "validation.invalid"
+      ]
+    },
+    "history.visit.remove": {
+      "class": "mutation",
+      "idempotency": "required",
+      "target": "session",
+      "ancestors": [
+        "machine"
+      ],
+      "params": {
+        "selectors": {
+          "machine": "required",
+          "session": "required"
+        },
+        "fields": {
+          "profile": {
+            "required": true,
+            "type": {
+              "kind": "primitive",
+              "name": "string",
+              "min_length": 1,
+              "max_length": 256
+            },
+            "description": "Browser profile wire id."
+          },
+          "url": {
+            "required": true,
+            "type": {
+              "kind": "primitive",
+              "name": "string",
+              "min_length": 1,
+              "max_length": 8192
+            },
+            "description": "Every visit of exactly this URL is removed."
+          }
+        },
+        "extra": false,
+        "constraints": [
+          "Canonical: cmux.history.visit.remove.",
+          "The omnibox's remove suggestion."
+        ]
+      },
+      "result": {
+        "kind": "apply",
+        "name": "MutationResult",
+        "arguments": [
+          {
+            "kind": "ref",
+            "name": "HistoryRemoveResult"
+          }
+        ]
+      },
+      "errors": [
+        "idempotency.conflict",
+        "operation.failed",
+        "selector.ambiguous",
+        "selector.invalid",
+        "selector.not_found",
+        "validation.invalid"
+      ]
+    },
+    "history.visit.summaries": {
+      "class": "read",
+      "idempotency": "forbidden",
+      "target": "session",
+      "ancestors": [
+        "machine"
+      ],
+      "params": {
+        "selectors": {
+          "machine": "required",
+          "session": "required"
+        },
+        "fields": {
+          "profile": {
+            "required": true,
+            "type": {
+              "kind": "primitive",
+              "name": "string",
+              "min_length": 1,
+              "max_length": 256
+            },
+            "description": "Browser profile wire id."
+          },
+          "limit": {
+            "required": false,
+            "type": {
+              "kind": "primitive",
+              "name": "uint32",
+              "minimum": 1,
+              "maximum": 5000
+            },
+            "default": 5000
+          }
+        },
+        "extra": false,
+        "constraints": [
+          "Canonical: cmux.history.visit.summaries.",
+          "One row per URL, most recent first: the omnibox seed."
+        ]
+      },
+      "result": {
+        "kind": "array",
+        "items": {
+          "kind": "ref",
+          "name": "HistoryVisitSummary"
+        }
+      },
+      "errors": [
+        "operation.failed",
+        "selector.ambiguous",
+        "selector.invalid",
+        "selector.not_found",
+        "validation.invalid"
+      ]
+    },
+    "history.visit.title": {
+      "class": "mutation",
+      "idempotency": "required",
+      "target": "session",
+      "ancestors": [
+        "machine"
+      ],
+      "params": {
+        "selectors": {
+          "machine": "required",
+          "session": "required"
+        },
+        "fields": {
+          "profile": {
+            "required": true,
+            "type": {
+              "kind": "primitive",
+              "name": "string",
+              "min_length": 1,
+              "max_length": 256
+            },
+            "description": "Browser profile wire id."
+          },
+          "url": {
+            "required": true,
+            "type": {
+              "kind": "primitive",
+              "name": "string",
+              "min_length": 1,
+              "max_length": 8192
+            },
+            "description": "The visited URL."
+          },
+          "title": {
+            "required": true,
+            "type": {
+              "kind": "primitive",
+              "name": "string",
+              "max_length": 1024
+            },
+            "description": "The page title that arrived after the navigation."
+          }
+        },
+        "extra": false,
+        "constraints": [
+          "Canonical: cmux.history.visit.title.",
+          "Sets the title of the newest visit of url in profile. Accepted only from the app that hosts the browser (a connection whose set-client-info kind is frontend); others get operation.failed reason hosting_app_required."
+        ]
+      },
+      "result": {
+        "kind": "apply",
+        "name": "MutationResult",
+        "arguments": [
+          {
+            "kind": "ref",
+            "name": "HistoryVisitTitleResult"
+          }
+        ]
+      },
+      "errors": [
+        "idempotency.conflict",
+        "operation.failed",
+        "selector.ambiguous",
+        "selector.invalid",
+        "selector.not_found",
         "validation.invalid"
       ]
     },

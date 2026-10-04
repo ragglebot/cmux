@@ -1,4 +1,4 @@
-//! Help for the session-state scopes `closed` and `git`, kept out of
+//! Help for the session-state scopes `closed`, `git` and `history`, kept out of
 //! `cli.rs` for its line budget.
 
 pub(super) const CLOSED_HELP: &str = "\
@@ -81,3 +81,32 @@ pub(super) fn edit_distance(left: &str, right: &str) -> usize {
     }
     previous[right.len()]
 }
+
+pub(super) const HISTORY_HELP: &str = "\
+USAGE
+  cmux history list [--kind <kind,...>] [--range <range>] [--limit <n>]
+    [--local-day-start-ms <ms>]
+  cmux history search <text>... [same options as list]
+  cmux history get <entry>
+  cmux history remove <entry>...
+  cmux history remove-site <host> [--profile <profile>]
+  cmux history remove-url <url> --profile <profile>
+  cmux history clear-range (--range <range> | --since-ms <ms>) [--kind <kind,...>]
+    [--profile <profile>] [--local-day-start-ms <ms>]
+  cmux history summaries --profile <profile> [--limit <n>]
+
+KINDS   page, location, closed, command, agent (default: every kind)
+RANGES  hour, today, week, month, all
+
+The session keeps page visits per browser profile and folds agent sessions and
+finished commands from its journal; list and search also show recently closed
+items and the app's location trail. search matches every word, ignoring case,
+accents and width. Newest entries come first; --limit defaults to 200.
+
+remove deletes page visits and hides agent and command entries (the journal
+keeps them); closed entries age out, and locations belong to the app.
+remove-url deletes every visit of one URL. clear-range deletes page visits and
+hides agent and command entries from the range's start (or --since-ms) until
+now. The other history words (back, forward, show, clear, reopen, resume, ...)
+run the app's history actions.
+";

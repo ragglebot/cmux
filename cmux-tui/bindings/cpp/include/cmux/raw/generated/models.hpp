@@ -14,7 +14,7 @@
 namespace cmux::raw {
 
 inline constexpr std::uint32_t kMuxProtocolVersion = 12U;
-inline constexpr std::string_view kProtocolIrSha256 = "0edc0a3c7e51c1f0843d49e78b98ef01dea251fb14beeda82935fcf345a138a1";
+inline constexpr std::string_view kProtocolIrSha256 = "18aa84e3c86c80a11496bf95778d57cedee27ff5aabacf161cfc9d52382b704e";
 
 struct AgentRecord;
 enum class AgentReportSource;
@@ -406,6 +406,7 @@ struct EmptyEvent;
 struct FrameEvent;
 struct FrontendProjectionChangedEvent;
 struct GraphicsStatusEvent;
+struct HistoryChangedEvent;
 struct LayoutChangedEvent;
 struct MachineUsageChangedEvent;
 struct NotificationEvent;
@@ -1816,6 +1817,12 @@ struct GuestUrlOpenResult {
 struct GuestUrlSubscribeResult {
     bool url_open_ready{};
     friend bool operator==(const GuestUrlSubscribeResult&, const GuestUrlSubscribeResult&) = default;
+};
+
+struct HistoryChangedEvent {
+    std::vector<std::string> kinds{};
+    std::uint64_t revision{};
+    friend bool operator==(const HistoryChangedEvent&, const HistoryChangedEvent&) = default;
 };
 
 enum class IdMappingKind {
@@ -6427,6 +6434,12 @@ template <>
 struct Codec<GraphicsStatusEvent> {
     static Result<Json> encode(const GraphicsStatusEvent& value);
     static Result<GraphicsStatusEvent> decode(const Json& value);
+};
+
+template <>
+struct Codec<HistoryChangedEvent> {
+    static Result<Json> encode(const HistoryChangedEvent& value);
+    static Result<HistoryChangedEvent> decode(const Json& value);
 };
 
 template <>

@@ -15,7 +15,9 @@ use flags::BOOLEAN_FLAGS;
 #[cfg(test)]
 pub(in crate::cli) mod cases;
 mod flags;
+use flags::validate_one_of;
 mod git;
+pub(in crate::cli) mod history;
 mod screen;
 mod state;
 
@@ -216,6 +218,7 @@ pub(super) fn parse(args: &[String], surface: super::Surface) -> Result<CommandP
         "room" => state::parse_room(&strs(&tokens.words[1..]), &mut tokens.flags)?,
         "closed" => state::parse_closed(&strs(&tokens.words[1..]), &mut tokens.flags)?,
         "git" => git::parse_git(&strs(&tokens.words[1..]), &mut tokens.flags)?,
+        "history" => history::parse_history(&strs(&tokens.words[1..]), &mut tokens.flags)?,
         "notify" => parse_notify(&tokens.words[1..], &mut tokens.flags)?,
         "agent" => parse_agent(&tokens.words[1..], &mut tokens.flags)?,
         "sidebar" => parse_sidebar(&tokens.words[1..], &mut selectors, &mut tokens.flags)?,
@@ -2095,14 +2098,6 @@ fn supports_expected_revision(operation: ResourceOperation) -> bool {
                 | ResourceOperation::SessionJournalProducerPut
                 | ResourceOperation::SessionJournalSegmentSeal
         )
-}
-
-fn validate_one_of(flag: &str, value: &str, allowed: &[&str]) -> Result<(), UsageError> {
-    if allowed.contains(&value) {
-        Ok(())
-    } else {
-        Err(UsageError::new(format!("{flag} must be one of {}", allowed.join(", "))))
-    }
 }
 
 fn parse_bool(flag: &str, value: &str) -> Result<bool, UsageError> {

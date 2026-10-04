@@ -14,6 +14,7 @@ workspace = true
 ghostty-vt.workspace = true
 cmux-tui-cdp.workspace = true
 cmux-layout-reducer.workspace = true
+cmux-history.workspace = true
 cmux-unix-socket.workspace = true
 cmux-pty.workspace = true
 cmux-remote-protocol.workspace = true

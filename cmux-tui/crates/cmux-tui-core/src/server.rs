@@ -472,6 +472,7 @@ fn advertised_capabilities(bounded_clear_history_fallback_writes: bool) -> Vec<&
         crate::state::conversation_tabs_store::CONVERSATION_TABS_CAPABILITY,
         crate::git_ops::CHECKPOINTS_CAPABILITY,
         crate::git_ops::FILES_SEARCH_CAPABILITY,
+        crate::history::HISTORY_CAPABILITY,
     ];
     if bounded_clear_history_fallback_writes {
         capabilities.push(CLEAR_HISTORY_KEY_CAPABILITY);
@@ -7495,6 +7496,29 @@ fn trusted_local_resource_client(
     }
 }
 
+/// Page visits and their titles come from the app that hosts the browser:
+/// a local connection whose `set-client-info` kind is `frontend`. The kind
+/// is the connection's own claim, not an attestation (history.md 2).
+fn hosting_app_resource_client(
+    mux: &Mux,
+    client: u64,
+    operation: ResourceOperation,
+) -> Result<(), ResourceError> {
+    let kind = mux.control_clients.client_info(client).and_then(|(_, kind)| kind);
+    if mux.control_clients.is_unix(client) && kind.as_deref() == Some("frontend") {
+        return Ok(());
+    }
+    Err(ResourceError::operation_failed(
+        operation.wire_name(),
+        "hosting_app_required",
+        json!({"required_authority": "hosting_app"}),
+    ))
+}
+
+#[cfg(test)]
+#[path = "server/history_gate_tests.rs"]
+mod history_gate_tests;
+
 fn handle_resource_session_shutdown(
     mux: &Arc<Mux>,
     client: u64,
@@ -7574,6 +7598,13 @@ fn handle_resource_connection_message(
                 false,
             )),
         );
+    }
+    if matches!(
+        operation,
+        ResourceOperation::HistoryVisitRecord | ResourceOperation::HistoryVisitTitle
+    ) && let Err(error) = hosting_app_resource_client(mux, client, operation)
+    {
+        return send_resource_response(writer, id, operation, Err(error));
     }
     debug_assert_eq!(
         handles_resource_connection_operation(operation),
@@ -16123,6 +16154,11 @@ fn subscribed_event_json(event: &MuxEvent) -> Value {
             "event": "bookmarks-changed",
             "browser_profile_id": change.browser_profile_id,
             "bookmarks_revision": change.bookmarks_revision,
+        }),
+        MuxEvent::HistoryChanged { revision, kinds } => json!({
+            "event": "history-changed",
+            "revision": revision,
+            "kinds": kinds,
         }),
         MuxEvent::TerminalRegistryChanged { registry_id, generation, terminal_revision } => json!({
             "event":"terminal-registry-changed",
@@ -27251,6 +27287,7 @@ mod tests {
             FRONTEND_BROWSER_OWNER_CAPABILITY,
             crate::git_ops::CHECKPOINTS_CAPABILITY,
             crate::git_ops::FILES_SEARCH_CAPABILITY,
+            crate::history::HISTORY_CAPABILITY,
         ] {
             assert!(capabilities.iter().any(|value| value.as_str() == Some(expected)));
         }

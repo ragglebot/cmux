@@ -77,8 +77,12 @@ pub(super) const EXCLUDED: &[(&str, &str)] = &[
     ("window_record.put", WINDOW_RECORD_REASON),
     ("window_record.delete", WINDOW_RECORD_REASON),
     ("workspace.ensure_home", HOME_REASON),
+    ("history.visit.record", HISTORY_VISIT_REASON),
+    ("history.visit.title", HISTORY_VISIT_REASON),
 ];
 
+const HISTORY_VISIT_REASON: &str = "Page visits are reported by the app that hosts the browser \
+     when a main-frame navigation finishes; agents read history, they do not fabricate visits.";
 const MACHINE_REASON: &str =
     "Machine and session plumbing in the cmux-tui-only scopes; the curated cmux CLI omits it.";
 const LIFECYCLE_REASON: &str = "Session lifecycle (ends every terminal or reloads the daemon); \

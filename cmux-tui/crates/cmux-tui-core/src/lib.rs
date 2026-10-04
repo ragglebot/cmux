@@ -17,6 +17,7 @@ mod conversation_store;
 pub mod diagnostics;
 mod event_bus;
 mod git_ops;
+mod history;
 #[cfg(unix)]
 mod image_paste;
 #[cfg(unix)]

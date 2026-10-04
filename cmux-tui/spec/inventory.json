@@ -41,6 +41,15 @@
     "git.diff",
     "git.files.search",
     "git.status",
+    "history.clear",
+    "history.entries.get",
+    "history.entries.list",
+    "history.entries.remove",
+    "history.site.remove",
+    "history.visit.record",
+    "history.visit.remove",
+    "history.visit.summaries",
+    "history.visit.title",
     "machine.get",
     "machine.list",
     "notification.ack",
@@ -533,6 +542,12 @@
     },
     {
       "name": "graphics-status",
+      "streams": [
+        "subscribe"
+      ]
+    },
+    {
+      "name": "history-changed",
       "streams": [
         "subscribe"
       ]

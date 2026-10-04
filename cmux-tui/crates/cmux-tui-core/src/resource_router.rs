@@ -6,11 +6,13 @@
 mod auxiliary;
 mod content;
 mod effects;
+mod fields;
 mod mouse;
 mod owner;
 mod session;
 mod topology;
 
+pub(super) use fields::{expected_revision, optional_string, required_string, required_u64};
 pub(crate) use owner::requires_connection_context;
 use owner::{OperationOwner, operation_owner};
 
@@ -808,6 +810,7 @@ fn dispatch_resource_request(
         OperationOwner::Auxiliary => auxiliary::dispatch(mux, request),
         OperationOwner::State => crate::state::router::dispatch(mux, request),
         OperationOwner::Git => crate::git_ops::dispatch(mux, request),
+        OperationOwner::History => crate::history::dispatch(mux, request),
         OperationOwner::Machine => {
             mux.resource_machine_service().dispatch(&ResourceMachineRequest {
                 operation,
@@ -1359,53 +1362,6 @@ pub(super) fn find_snapshot(
         .and_then(|values| values.iter().find(|value| value["id"] == id))
         .cloned()
         .ok_or_else(|| ResourceError::not_found(collection.trim_end_matches('s'), id))
-}
-
-pub(super) fn expected_revision(fields: &Map<String, Value>) -> Result<Option<u64>, ResourceError> {
-    fields
-        .get("expected_revision")
-        .map(|value| {
-            serde_json::from_value::<WireDecimal>(value.clone()).map(WireDecimal::get).map_err(
-                |error| {
-                    validation_error(
-                        "expected_revision must be an unsigned decimal string",
-                        json!({"error":error.to_string()}),
-                    )
-                },
-            )
-        })
-        .transpose()
-}
-
-pub(super) fn required_string<'a>(
-    fields: &'a Map<String, Value>,
-    field: &str,
-) -> Result<&'a str, ResourceError> {
-    fields
-        .get(field)
-        .and_then(Value::as_str)
-        .ok_or_else(|| validation_error("required string field is missing", json!({"field":field})))
-}
-
-pub(super) fn optional_string(
-    fields: &Map<String, Value>,
-    field: &str,
-) -> Result<Option<String>, ResourceError> {
-    fields
-        .get(field)
-        .map(|value| {
-            value
-                .as_str()
-                .map(str::to_string)
-                .ok_or_else(|| validation_error("field must be a string", json!({"field":field})))
-        })
-        .transpose()
-}
-
-pub(super) fn required_u64(fields: &Map<String, Value>, field: &str) -> Result<u64, ResourceError> {
-    fields.get(field).and_then(Value::as_u64).ok_or_else(|| {
-        validation_error("required unsigned integer field is missing", json!({"field":field}))
-    })
 }
 
 pub(super) fn resource_operation_error(error: anyhow::Error) -> ResourceError {

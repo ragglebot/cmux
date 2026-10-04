@@ -3868,3 +3868,53 @@ fn state_cli_tab_groups_and_caller_workspace_through_a_real_daemon() {
     state_cli(&server, None, &["tab", "group", "agents", "ungroup"]);
     assert_eq!(state_cli(&server, None, &["tab", "group", "list"]), serde_json::json!([]));
 }
+
+#[cfg(unix)]
+#[test]
+fn history_cli_records_lists_and_removes_a_visit_through_a_real_daemon() {
+    let server = HeadlessServer::start("history-cli");
+    let now_ms = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis().to_string();
+    let visit = serde_json::json!({
+        "machine": "current",
+        "session": "current",
+        "profile": "default",
+        "url": "https://example.com/docs",
+        "title": "Résumé docs",
+        "tab": "local/tab_1",
+        "at_ms": now_ms,
+    });
+    // The hosting app reports visits on its own `frontend` connection; the
+    // CLI only reads and edits them.
+    let mut app = UnixStream::connect(&server.socket).unwrap();
+    let mut lines = BufReader::new(app.try_clone().unwrap()).lines();
+    let hello = r#"{"id":1,"cmd":"set-client-info","name":"cmux-next","kind":"frontend"}"#;
+    writeln!(app, "{hello}").unwrap();
+    let answer = lines.next().unwrap().unwrap();
+    assert!(answer.contains("\"ok\":true"), "{answer}");
+    let request = serde_json::json!({
+        "protocol": "cmux.protocol/2", "type": "request", "id": "visit",
+        "operation": "history.visit.record", "params": visit, "idempotency_key": "visit-1",
+    });
+    writeln!(app, "{request}").unwrap();
+    let response: serde_json::Value =
+        serde_json::from_str(&lines.next().unwrap().unwrap()).unwrap();
+    let recorded = response["result"].clone();
+    let id = recorded["value"]["id"].as_str().unwrap_or_else(|| panic!("{response}")).to_string();
+    assert!(id.starts_with("page:default:"), "{recorded}");
+
+    let found = state_cli(&server, None, &["history", "search", "resume", "--kind", "page"]);
+    let entries = found["entries"].as_array().unwrap_or_else(|| panic!("{found}"));
+    assert_eq!(entries.len(), 1, "{found}");
+    assert_eq!(entries[0]["id"], id.as_str());
+    assert_eq!(entries[0]["url"], "https://example.com/docs");
+
+    let shown = state_cli(&server, None, &["history", "get", &id]);
+    assert_eq!(shown["title"], "Résumé docs", "{shown}");
+    let summaries = state_cli(&server, None, &["history", "summaries", "--profile", "default"]);
+    assert_eq!(summaries[0]["visit_count"], 1, "{summaries}");
+
+    let removed = state_cli(&server, None, &["history", "remove", &id]);
+    assert_eq!(removed["value"]["removed"], 1, "{removed}");
+    let after = state_cli(&server, None, &["history", "list", "--kind", "page"]);
+    assert_eq!(after["entries"], serde_json::json!([]), "{after}");
+}

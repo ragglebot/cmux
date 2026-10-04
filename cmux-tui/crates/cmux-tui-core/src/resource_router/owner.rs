@@ -12,6 +12,7 @@ pub(super) enum OperationOwner {
     Auxiliary,
     State,
     Git,
+    History,
     Connection,
 }
 
@@ -122,6 +123,15 @@ pub(super) const fn operation_owner(operation: ResourceOperation) -> OperationOw
         | ResourceOperation::GitDiff
         | ResourceOperation::GitFilesSearch
         | ResourceOperation::GitStatus => OperationOwner::Git,
+        ResourceOperation::HistoryEntriesList
+        | ResourceOperation::HistoryEntriesGet
+        | ResourceOperation::HistoryEntriesRemove
+        | ResourceOperation::HistorySiteRemove
+        | ResourceOperation::HistoryClear
+        | ResourceOperation::HistoryVisitRecord
+        | ResourceOperation::HistoryVisitSummaries
+        | ResourceOperation::HistoryVisitTitle
+        | ResourceOperation::HistoryVisitRemove => OperationOwner::History,
         ResourceOperation::WorkspaceUpdate
         | ResourceOperation::TabPin
         | ResourceOperation::TabUnpin
