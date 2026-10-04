@@ -611,7 +611,9 @@ mod error_codes;
 #[cfg(test)]
 #[path = "resource/wire_name_tests.rs"]
 mod resource_operation_wire_name_tests;
-pub(crate) use error_codes::{RESOURCE_ERROR_CODES, is_catalog_error_code};
+#[cfg(test)]
+pub(crate) use error_codes::RESOURCE_ERROR_CODES;
+pub(crate) use error_codes::is_catalog_error_code;
 mod scope;
 mod wire_decimal;
 mod wire_name;

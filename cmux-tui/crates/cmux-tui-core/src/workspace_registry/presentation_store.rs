@@ -918,9 +918,7 @@ impl WorkspaceRegistry {
         let kept_tabs = crate::state::kept_tab_store::read_kept_tabs(&self.connection)?;
         let conversation_tabs = read_conversation_tabs(&self.connection)?;
         let home_workspace = crate::state::home_store::live_home(&self.connection)?.map(|h| h.1);
-        let app_workspaces =
-            crate::state::app_screens_store::read_app_workspaces(&self.connection)?;
-        let app_tabs = crate::state::app_screens_store::read_app_tabs(&self.connection)?;
+        let apps = crate::state::app_screens_store::AppPresentation::read(&self.connection)?;
         Ok(PresentationSnapshot {
             groups,
             workspaces,
