@@ -70,6 +70,12 @@ public nonisolated struct ScreenGeometry: Hashable, Sendable {
                                   stripWidth: viewport.width, stripHeight: viewport.height, uncoveredMaxX: viewport.width,
                                   uncoveredMaxY: viewport.height, clipMaxX: viewport.width, clipMaxY: viewport.height)
         case let .columns(all):
+            // An app column alone (an `app` screen, or an `appColumn` screen
+            // with no ordinary column) fills the screen edge to edge: the one
+            // exception to "at least one column scrolls" (app-screens.md 1).
+            if all.count == 1, let only = all.first, only.app != nil {
+                return appFill(only, viewport: viewport, style: style, scale: scale)
+            }
             if style.prototype.model != .off,
                let prototype = LayoutModelPrototype.geometry(all, viewport: viewport, style: style, scale: scale) {
                 return prototype
@@ -120,12 +126,44 @@ public nonisolated struct ScreenGeometry: Hashable, Sendable {
             }
             geometry.snapOffsets = ColumnStripGeometry.snapOffsets(frames: strip.frames, contentWidth: strip.contentWidth,
                                                                    viewportWidth: placement.stripWidth, gap: gap)
-            for entry in placement.sticky {
+            for var entry in placement.sticky {
                 guard let column = all.first(where: { $0.id == entry.column }) else { continue }
+                if column.app != nil { entry = flushToOuterEdge(entry, viewport: viewport) }
                 geometry.addSticky(column, frame: entry, style: style, scale: scale)
             }
             return geometry
         }
+    }
+
+    /// An app column alone on its screen: one fixed column over the whole
+    /// viewport, with no edges or gap zones (nothing scrolls).
+    private static func appFill(_ column: LayoutColumn, viewport: CGSize, style: LayoutStyle, scale: CGFloat) -> ScreenGeometry {
+        let bounds = CGRect(origin: .zero, size: viewport)
+        let result = SplitGeometry.layout(column.root, in: bounds, style: style, scale: scale)
+        var geometry = ScreenGeometry(viewport: viewport, panes: result.panes, dividers: result.dividers, contentWidth: viewport.width,
+                                      isColumns: false, stripWidth: viewport.width, stripHeight: viewport.height,
+                                      uncoveredMaxX: viewport.width, uncoveredMaxY: viewport.height,
+                                      clipMaxX: viewport.width, clipMaxY: viewport.height)
+        geometry.columns[column.id] = bounds
+        geometry.columnOrder = [column.id]
+        return geometry
+    }
+
+    /// A docked app column has no gap between it and its viewport edge: it
+    /// draws without chrome, so it meets the window edge (the inner edge,
+    /// and so the strip, stays where it was).
+    private static func flushToOuterEdge(_ entry: StickyColumnFrame, viewport: CGSize) -> StickyColumnFrame {
+        var entry = entry
+        var frame = entry.frame
+        switch entry.sticky.edge {
+        case .left: frame = CGRect(x: 0, y: frame.minY, width: frame.maxX, height: frame.height)
+        case .right: frame = CGRect(x: frame.minX, y: frame.minY, width: viewport.width - frame.minX, height: frame.height)
+        case .top: frame = CGRect(x: frame.minX, y: 0, width: frame.width, height: frame.maxY)
+        case .bottom: frame = CGRect(x: frame.minX, y: frame.minY, width: frame.width, height: viewport.height - frame.minY)
+        }
+        entry.frame = frame
+        entry.cover = entry.cover.union(frame)
+        return entry
     }
 
     public var maxOffset: CGFloat {

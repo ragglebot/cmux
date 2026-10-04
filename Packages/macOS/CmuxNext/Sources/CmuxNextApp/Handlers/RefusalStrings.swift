@@ -95,6 +95,10 @@ nonisolated enum RefusalStrings {
     static var audioMuteUnported: String { text("handlers.refusal.audioMuteUnported", "needs audio mute support in the cmux-next browser") }
     static func noColumnShown(_ id: String) -> String { format("handlers.refusal.noColumnShown", "no column %@ is shown", id) }
     static var addSecondColumnFirst: String { text("handlers.refusal.addSecondColumnFirst", "Add a second column first") }
+    /// An `app` screen holds one app tab and nothing else (`app-screen-fixed`).
+    static var appScreenFixed: String { text("handlers.refusal.appScreenFixed", "An app screen shows only its app") }
+    /// An `appColumn` screen's app column is locked (`app-column-locked`).
+    static var appColumnLocked: String { text("handlers.refusal.appColumnLocked", "The app column cannot change") }
     static var columnAlreadyHasWidth: String { text("handlers.refusal.columnAlreadyHasWidth", "the column already has that width") }
     static var columnTooNarrowToSplit: String { text("handlers.refusal.columnTooNarrowToSplit", "Not enough room to split this column") }
     static var columnAlreadySticky: String { text("handlers.refusal.columnAlreadySticky", "the column is already sticky there") }

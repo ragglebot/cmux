@@ -41,6 +41,10 @@ public struct TabSnapshot: Sendable, Hashable, Decodable {
     /// The workspace store's keep-layout record of a dead kept tab
     /// (`end-terminals-keep-layout-v1`).
     public var relaunch: TabRelaunch?
+    /// The app an `.app` tab shows (`app-screens-v1`, wire `app`).
+    public var app: String?
+    /// The app's route inside its page, if any (wire `route`).
+    public var route: String?
 
     public init(
         surface: SurfaceID,
@@ -64,7 +68,9 @@ public struct TabSnapshot: Sendable, Hashable, Decodable {
         browserRenderer: String? = nil,
         browserEngine: String? = nil,
         faviconURL: String? = nil,
-        browserProfileID: String? = nil
+        browserProfileID: String? = nil,
+        app: String? = nil,
+        route: String? = nil
     ) {
         self.surface = surface
         self.tabResourceID = tabResourceID
@@ -88,6 +94,8 @@ public struct TabSnapshot: Sendable, Hashable, Decodable {
         self.browserEngine = browserEngine
         self.faviconURL = faviconURL
         self.browserProfileID = browserProfileID
+        self.app = app
+        self.route = route
     }
 
     /// Title a tab strip shows: the user name wins over the program title.
@@ -98,11 +106,11 @@ public struct TabSnapshot: Sendable, Hashable, Decodable {
 
     /// True when the app draws this tab itself; `attach-surface` refuses it.
     public var isFrontendOwned: Bool {
-        browserRenderer == "frontend" || kind == .remoteTerminal || kind == .conversation
+        browserRenderer == "frontend" || kind == .remoteTerminal || kind == .conversation || kind == .app
     }
 
     enum CodingKeys: String, CodingKey {
-        case surface, kind, name, title, size, dead, notification, url, pinned, cwd, remote, relaunch, conversation
+        case surface, kind, name, title, size, dead, notification, url, pinned, cwd, remote, relaunch, conversation, app, route
         case tabResourceID = "tab_resource_id"
         case contentResourceID = "content_resource_id"
         case terminalID = "terminal_id"
@@ -154,5 +162,8 @@ public struct TabSnapshot: Sendable, Hashable, Decodable {
         remote = kind == .remoteTerminal ? try? c.decodeIfPresent(RemoteTerminalRef.self, forKey: .remote) : nil
         relaunch = try c.decodeIfPresent(TabRelaunch.self, forKey: .relaunch)
         conversation = kind == .conversation ? try? c.decodeIfPresent(ConversationTabRef.self, forKey: .conversation) : nil
+        // One flat shape: `{"kind":"app","app":"<id>","route":"<path>"}`, route omitted when absent.
+        app = kind == .app ? (try? c.decodeIfPresent(String.self, forKey: .app)).flatMap { $0 } : nil
+        route = app == nil ? nil : (try? c.decodeIfPresent(String.self, forKey: .route)).flatMap { $0 }
     }
 }

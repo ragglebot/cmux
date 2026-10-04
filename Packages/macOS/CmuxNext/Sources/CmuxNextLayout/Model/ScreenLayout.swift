@@ -6,12 +6,19 @@ public nonisolated struct LayoutColumn: Hashable, Sendable, Identifiable {
     public var root: SplitNode
     /// Pinned to a viewport edge (daemon `columns[].sticky`); nil scrolls.
     public var sticky: StickyColumn?
+    /// The app this column shows without chrome: an `appColumn` screen's
+    /// locked app column (daemon `columns[].app`), or an `app` screen's only
+    /// column. Its panes have no padding, rounding, border, ring or tab strip
+    /// (plans/cmux-next/app-screens.md 3); nil for every ordinary column.
+    public var app: String?
 
-    public init(id: ColumnID, width: Double = ColumnWidthPreset.defaultWidth, root: SplitNode, sticky: StickyColumn? = nil) {
+    public init(id: ColumnID, width: Double = ColumnWidthPreset.defaultWidth, root: SplitNode, sticky: StickyColumn? = nil,
+                app: String? = nil) {
         self.id = id
         self.width = width
         self.root = root
         self.sticky = sticky
+        self.app = app
     }
 }
 
@@ -39,6 +46,11 @@ public nonisolated enum ScreenLayout: Hashable, Sendable {
     public var columns: [LayoutColumn] {
         if case let .columns(columns) = self { return columns }
         return []
+    }
+
+    /// Panes drawn without chrome: those of app columns.
+    public var chromelessPanes: Set<PaneID> {
+        Set(columns.lazy.filter { $0.app != nil }.flatMap(\.root.panes))
     }
 
     /// Columns in the order the user sees them: the left dock, the top dock,
@@ -92,7 +104,7 @@ public nonisolated enum ScreenLayout: Hashable, Sendable {
             return x.hasSameShape(as: y)
         case let (.columns(x), .columns(y)):
             return x.count == y.count && zip(x, y).allSatisfy {
-                $0.id == $1.id && $0.sticky == $1.sticky && $0.root.hasSameShape(as: $1.root)
+                $0.id == $1.id && $0.sticky == $1.sticky && $0.app == $1.app && $0.root.hasSameShape(as: $1.root)
             }
         default:
             return false
@@ -130,11 +142,14 @@ public nonisolated struct LayoutScreen: Hashable, Sendable, Identifiable {
     public var id: ScreenID
     public var name: String
     public var layout: ScreenLayout
+    /// `workspace` unless the daemon marks an app screen.
+    public var kind: LayoutScreenKind
 
-    public init(id: ScreenID, name: String, layout: ScreenLayout) {
+    public init(id: ScreenID, name: String, layout: ScreenLayout, kind: LayoutScreenKind = .workspace) {
         self.id = id
         self.name = name
         self.layout = layout
+        self.kind = kind
     }
 
     /// Every screen is a column strip: a screen stored as one split tree is
