@@ -47,6 +47,10 @@ struct AppScreenMappingTests {
         #expect(mapped.layout.columns.map(\.app) == ["home", nil])
         #expect(mapped.layout.columns.first?.sticky == StickyColumn(edge: .left, mode: .docked))
         #expect(mapped.layout.chromelessPanes.count == 1)
+        // A drop after the app column (TabDragSession.columnAnchor) names it
+        // to the daemon as `afterColumn`.
+        let handles = LayoutMapping.shared.map(try workspace([screen]), appScreens: true).handles
+        #expect(handles.columns[LayoutColumnID("column:9")] == DaemonColumnID(rawValue: 9))
     }
 
     /// Without `app-screens-v1` the same tree is an ordinary screen with a
