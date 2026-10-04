@@ -164,6 +164,8 @@ public struct DaemonCapabilities: Sendable {
     public let creationReceipts = "creation-receipts-v1"
     public let creationAttemptKeys = "creation-attempt-keys-v1"
     public let terminalColorOverrides = "terminal-color-overrides-v1"
+    /// The daemon history module (react-pages.md H3): page visits, the merged read model, clearing.
+    public let history = "history-v1"
 
     /// Capabilities the bundled daemon must serve. The bundled cmux-tui is
     /// built from this checkout's own cmux-tui tree
@@ -180,7 +182,7 @@ public struct DaemonCapabilities: Sendable {
                                             sessionIdentity, localConversations, tabSplitRespawn, frontendBrowserHistory,
                                             attachIdentity, creationReceipts, creationAttemptKeys, terminalColorOverrides,
                                             workspaceKind, conversationTabs, conversationSearch,
-                                            tabWorkspaceName] }
+                                            tabWorkspaceName, history] }
 
     /// App code waiting for a daemon half that no branch has yet. Each
     /// feature shows disabled with its reason (or refuses with it) while the

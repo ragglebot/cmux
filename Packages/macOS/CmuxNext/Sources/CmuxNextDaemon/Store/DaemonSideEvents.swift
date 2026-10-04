@@ -1,4 +1,4 @@
-/// Events that are not part of the tree snapshot (bookmarks, local
+/// Events that are not part of the tree snapshot (bookmarks, history, local
 /// conversations), fanned out in arrival order to the services that own their
 /// projections. Each subscriber filters the cases it needs.
 @MainActor

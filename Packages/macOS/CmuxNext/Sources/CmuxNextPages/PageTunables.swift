@@ -21,7 +21,7 @@ public nonisolated enum PageTunables {
 
     public static let history = Tunable<PageImplementation>.choice(
         "history.surface", section, "History page", help: "Shows cmux://history as the React page. New tabs use it.",
-        default: .native, code: "PageTunables.history")
+        default: .web, code: "PageTunables.history")
 
     public static var all: [TunableDescriptor] { [history.descriptor] }
 }

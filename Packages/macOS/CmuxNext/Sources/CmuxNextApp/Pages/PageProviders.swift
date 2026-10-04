@@ -86,6 +86,18 @@ final class DaemonPageRelay: PageProvider {
         }
     }
 
+    /// `cmux.history.changed`: the daemon's `history-changed` side event, relayed in order.
+    func subscribe(_ stream: String, filter: CmuxNextSettings.JSONValue, context: PageCallContext,
+                   onEvent: @escaping @MainActor (CmuxNextSettings.JSONValue) -> Void) async throws -> PageSubscription {
+        guard stream == "cmux.history.changed" else { throw PageError.unknownOp(stream) }
+        let events = services.machines.local.store.sideEvents
+        let token = events.subscribe { event in
+            guard case .historyChanged(let revision, let kinds) = event else { return }
+            onEvent(["revision": .number(Double(revision)), "kinds": .array(kinds.map(CmuxNextSettings.JSONValue.string))])
+        }
+        return PageSubscription { events.unsubscribe(token) }
+    }
+
     static func daemonParams(_ members: [String: CmuxNextSettings.JSONValue]) throws -> [String: CmuxNextDaemon.JSONValue] {
         try JSONDecoder().decode([String: CmuxNextDaemon.JSONValue].self,
                                  from: Data(CmuxNextSettings.JSONValue.object(members).compactText.utf8))
