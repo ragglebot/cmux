@@ -55,8 +55,10 @@ public nonisolated struct AppInstallDraft: Sendable, Hashable {
     }
 
     /// Whether a required scope starts checked: first-party all; Verified
-    /// all but `execute` and `external`; unverified read scopes only.
+    /// all but `execute` and `external`; unverified read scopes only. Elevated
+    /// scopes never start checked: only an explicit user grant turns them on.
     public static func onByDefault(_ kind: AppScopeKind, tier: AppTier) -> Bool {
+        if kind.isElevated { return false }
         switch tier {
         case .firstParty: true
         case .verified: kind.risk != .execute && kind.risk != .external
