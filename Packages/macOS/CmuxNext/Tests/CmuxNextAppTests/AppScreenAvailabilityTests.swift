@@ -60,7 +60,7 @@ struct AppScreenAvailabilityTests {
     @Test func everyListedActionExists() {
         let registry = ActionRegistry.standard()
         for id in AppScreenAvailability.appScreenFixed {
-            #expect(registry.action(for: id) != nil, "\(id)")
+            #expect(registry.descriptor(for: id) != nil, "\(id)")
         }
     }
 
