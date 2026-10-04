@@ -135,8 +135,12 @@ public nonisolated struct ScreenGeometry: Hashable, Sendable {
         }
     }
 
-    /// An app column alone on its screen: one fixed column over the whole
-    /// viewport, with no edges or gap zones (nothing scrolls).
+    /// An app column alone on its screen: one column over the whole
+    /// viewport, with no edges (nothing scrolls). A docked app column (an
+    /// `appColumn` screen with no ordinary column yet) keeps its edge, so no
+    /// dock is offered there, and the whole screen is the drop zone for the
+    /// first ordinary column after it (its pane is locked). An `app`
+    /// screen's column never grows a neighbor: no zone.
     private static func appFill(_ column: LayoutColumn, viewport: CGSize, style: LayoutStyle, scale: CGFloat) -> ScreenGeometry {
         let bounds = CGRect(origin: .zero, size: viewport)
         let result = SplitGeometry.layout(column.root, in: bounds, style: style, scale: scale)
@@ -146,6 +150,10 @@ public nonisolated struct ScreenGeometry: Hashable, Sendable {
                                       clipMaxX: viewport.width, clipMaxY: viewport.height)
         geometry.columns[column.id] = bounds
         geometry.columnOrder = [column.id]
+        if let sticky = column.sticky {
+            geometry.sticky = [StickyColumnFrame(column: column.id, sticky: sticky, frame: bounds, cover: .zero, glass: .zero)]
+            geometry.gapZones = [ColumnGapZone(after: column.id, frame: bounds)]
+        }
         return geometry
     }
 
