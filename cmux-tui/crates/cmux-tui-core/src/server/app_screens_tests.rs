@@ -72,7 +72,13 @@ impl Wire {
         if let Some(key) = key {
             envelope["idempotency_key"] = json!(key);
         }
-        crate::resource_router::handle_resource_message(&self.mux, &envelope.to_string()).unwrap()
+        // A request the catalog refuses comes back as an error, not a response.
+        match crate::resource_router::handle_resource_message(&self.mux, &envelope.to_string()) {
+            Ok(response) => response,
+            Err(error) => {
+                json!({"ok": false, "error": {"code": error.code, "details": error.details}})
+            }
+        }
     }
 
     fn v2_ok(&self, operation: &str, params: Value, key: Option<&str>) -> Value {
@@ -116,6 +122,27 @@ impl Wire {
 
     fn public_pane(&self, pane: PaneId) -> String {
         self.mux.with_state(|state| state.resource_indexes.pane_ids[&pane].to_string())
+    }
+
+    /// The `destination_*` fields of a v2 `tab.move` into `pane`.
+    fn destination(&self, pane: PaneId) -> Value {
+        self.mux.with_state(|state| {
+            let (workspace, screen) = state.screen_of(pane).unwrap();
+            let workspace = &state.workspaces[workspace];
+            json!({
+                "destination_workspace": workspace.public_id.as_str(),
+                "destination_screen": workspace.screens[screen].public_id.as_str(),
+                "destination_pane": state.resource_indexes.pane_ids[&pane].as_str(),
+            })
+        })
+    }
+
+    /// A v2 `tab.move` of `tab` to the end of `pane`.
+    fn tab_move(&self, tab: SurfaceId, pane: PaneId) -> Value {
+        let mut params = self.destination(pane);
+        params["tab"] = json!(self.public_tab(tab));
+        params["index"] = json!(0);
+        params
     }
 
     fn public_tab(&self, surface: SurfaceId) -> String {
@@ -368,7 +395,6 @@ fn app_screen_refuses_every_shape_and_changes_nothing() {
         wire.refused(request, code);
     }
     let (public_pane, public_app) = (wire.public_pane(pane), wire.public_tab(app));
-    let terminal_tab = wire.public_tab(terminal);
     let code = "app.screen_fixed";
     for (index, (operation, params)) in [
         (
@@ -397,12 +423,8 @@ fn app_screen_refuses_every_shape_and_changes_nothing() {
             json!({"workspace": workspace_id, "screen": screen_id,
                              "pane": public_pane, "tab": public_app}),
         ),
-        ("tab.move", json!({"tab": terminal_tab, "destination_pane": public_pane, "index": 0})),
-        (
-            "tab.move",
-            json!({"tab": public_app, "destination_pane": wire.public_pane(terminal_pane),
-                            "index": 0}),
-        ),
+        ("tab.move", wire.tab_move(terminal, pane)),
+        ("tab.move", wire.tab_move(app, terminal_pane)),
     ]
     .into_iter()
     .enumerate()
@@ -495,11 +517,8 @@ fn app_column_is_locked_and_ordinary_columns_are_free() {
             json!({"workspace": workspace_id, "screen": screen_id,
                              "pane": public_app_pane, "tab": public_app}),
         ),
-        (
-            "tab.move",
-            json!({"tab": public_app, "destination_pane": wire.public_pane(ordinary),
-                            "index": 0}),
-        ),
+        ("tab.move", wire.tab_move(app, ordinary)),
+        ("tab.move", wire.tab_move(terminal, app_pane)),
     ]
     .into_iter()
     .enumerate()
@@ -531,6 +550,61 @@ fn app_column_is_locked_and_ordinary_columns_are_free() {
     let raw = wire.screen(&screen_id);
     assert_eq!(raw["kind"], "appColumn", "{raw}");
     assert!(tabs(&raw).iter().any(|tab| tab["surface"] == json!(app)), "{raw}");
+    wire.mux.shutdown();
+}
+
+/// A new ordinary column right of the app column is allowed from every
+/// shape (`new-pane-right`, `move-tab-to-column` anchored on the app pane or
+/// after the app column, v2 `pane.split` with `viewport_width`); the app
+/// column stays at index 0. A move into the app column is refused.
+#[test]
+fn app_column_accepts_new_columns_to_its_right() {
+    let mut wire = Wire::new();
+    let created = wire.ensure_app(HOME, "appColumn", "open-home");
+    let screen_id = created["value"]["screen_id"].as_str().unwrap().to_string();
+    let workspace_id = created["value"]["workspace_id"].as_str().unwrap().to_string();
+    let (app, app_pane) = app_tab(&wire.screen(&screen_id));
+    let first = wire.ok(json!({"cmd": "new-pane-right", "pane": app_pane, "width": 0.5}));
+    let ordinary = wire.pane_of(first["surface"].as_u64().unwrap());
+    let moved = wire.ok(json!({"cmd": "new-tab", "pane": ordinary}))["surface"].as_u64().unwrap();
+    wire.ok(json!({"cmd": "move-tab-to-column", "surface": moved, "pane": app_pane}));
+    let raw = wire.screen(&screen_id);
+    let columns = raw["columns"].as_array().unwrap().clone();
+    assert_eq!(columns.len(), 3, "{raw}");
+    assert_eq!(columns[0]["app"], HOME, "{raw}");
+    let app_column = columns[0]["id"].clone();
+    let again = wire.ok(json!({"cmd": "new-tab", "pane": ordinary}))["surface"].as_u64().unwrap();
+    wire.ok(json!({"cmd": "move-tab-to-column", "surface": again, "pane": ordinary,
+                   "after_column": app_column}));
+    let columns = wire.screen(&screen_id)["columns"].as_array().unwrap().clone();
+    assert_eq!(columns.len(), 4);
+    assert_eq!(columns[0]["app"], HOME);
+    assert!(wire.mux.with_state(|state| state.pane_of(again)) != Some(ordinary));
+    let split = json!({"workspace": workspace_id, "screen": screen_id,
+                       "pane": wire.public_pane(app_pane), "direction": "right",
+                       "viewport_width": 0.5});
+    wire.v2_ok("pane.split", split, Some("split-right-of-app"));
+    let raw = wire.screen(&screen_id);
+    let columns = raw["columns"].as_array().unwrap().clone();
+    assert_eq!(columns.len(), 5, "{raw}");
+    assert_eq!(columns[0]["app"], HOME);
+    assert_eq!(
+        app_tab(&json!({"panes": [raw["panes"].as_array().unwrap().iter()
+        .find(|pane| pane["id"] == json!(app_pane)).unwrap()]}))
+        .0,
+        app
+    );
+
+    wire.refused(
+        json!({"cmd": "move-tab", "surface": moved, "pane": app_pane, "index": 0}),
+        "app-column-locked",
+    );
+    wire.v2_refused(
+        "tab.move",
+        wire.tab_move(moved, app_pane),
+        "move-into-app",
+        "app.column_locked",
+    );
     wire.mux.shutdown();
 }
 

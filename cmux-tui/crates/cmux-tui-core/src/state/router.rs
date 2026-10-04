@@ -493,7 +493,9 @@ pub(crate) fn dispatch(
         }
         // workspace-kind-v1 and app-screens-v1 (state/app_screens_router.rs).
         Op::WorkspaceEnsureHome | Op::WorkspaceEnsureApp | Op::TabCreateApp => {
-            ensure_session(mux, selectors)?;
+            if operation != Op::TabCreateApp {
+                ensure_session(mux, selectors)?;
+            }
             super::app_screens_router::dispatch(mux, &request).map_err(state_error)
         }
         // B4: workspace status

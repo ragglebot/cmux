@@ -1514,6 +1514,9 @@ impl Mux {
                     .map(|pane| (pane.id, pane.tabs.len())))
             })?;
             if let Some((pane, index)) = target {
+                self.with_state(|state| {
+                    crate::state::app_rules::refuse_move_tab(state, surface, pane)
+                })?;
                 anyhow::ensure!(self.move_tab(surface, pane, index), "tab could not be moved");
                 return Ok(());
             }
