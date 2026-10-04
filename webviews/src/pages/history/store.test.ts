@@ -161,6 +161,26 @@ describe("HistoryStore", () => {
     expect(store.getSnapshot().entries.length).toBe(sampleEntries(now).length);
   });
 
+  test("catalog decimal strings for at_ms and exit_code become numbers", async () => {
+    const provider = new MockHistoryProvider([], () => now);
+    provider.entries = [
+      {
+        id: "command:local/t/1",
+        kind: "command",
+        at_ms: String(now) as unknown as number,
+        title: "ls",
+        command: "ls",
+        exit_code: "0" as unknown as number,
+        available: true,
+      },
+    ];
+    const store = new HistoryStore(provider);
+    store.subscribe(() => undefined);
+    await store.start();
+    await settle();
+    expect(store.getSnapshot().entries[0]).toMatchObject({ at_ms: now, exit_code: 0 });
+  });
+
   test("no client: disconnected and nothing is sent", async () => {
     const store = new HistoryStore(null);
     store.subscribe(() => undefined);

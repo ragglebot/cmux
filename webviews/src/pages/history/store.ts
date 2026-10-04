@@ -161,7 +161,8 @@ export class HistoryStore {
     try {
       const result = await this.client.call<HistoryListResult>(HistoryOps.list, params);
       if (generation !== this.generation) return;
-      const entries = result.entries;
+      // The v2 catalog sends 64-bit integers (at_ms, exit_code) as decimal strings.
+      const entries = result.entries.map(normalizeEntry);
       this.set({
         entries,
         groups: groupEntries(entries, this.snapshot.grouping),
@@ -226,6 +227,13 @@ export class HistoryStore {
     this.snapshot = { ...this.snapshot, ...patch };
     for (const listener of this.listeners) listener();
   }
+}
+
+/** An entry with its catalog decimal strings (`at_ms`, `exit_code`) read as numbers. */
+export function normalizeEntry(entry: HistoryEntry): HistoryEntry {
+  const at = Number(entry.at_ms);
+  const exit = entry.exit_code === undefined ? undefined : Number(entry.exit_code);
+  return { ...entry, at_ms: Number.isFinite(at) ? at : 0, ...(exit === undefined ? {} : { exit_code: exit }) };
 }
 
 function message(error: unknown): string {

@@ -36,6 +36,14 @@ struct DaemonHistoryEntryTests {
         #expect(try Self.decode(#"{"id":"agent:x","kind":"agent","at_ms":1,"title":"no session","available":false}"#).historyEntry() == nil)
     }
 
+    @Test func catalogDecimalStringsDecodeLikeNumbers() throws {
+        let entry = try Self.decode(#"{"id":"page:default:7","kind":"page","at_ms":"1700000000000","title":"Docs","url":"https://docs.rs/","available":true}"#)
+        #expect(entry.atMS == 1_700_000_000_000)
+        let rows = try JSONDecoder().decode([DaemonVisitSummary].self,
+                                            from: Data(#"[{"url":"https://a.b/","visit_count":3,"last_visit_ms":"5000"}]"#.utf8))
+        #expect(rows.first?.lastVisitMS == 5_000)
+    }
+
     @Test func visitSummariesDecode() throws {
         let rows = try JSONDecoder().decode([DaemonVisitSummary].self, from: Data(#"[{"url":"https://a.b/","title":"A","visit_count":3,"last_visit_ms":5000}]"#.utf8))
         #expect(rows == [DaemonVisitSummary(url: "https://a.b/", title: "A", visitCount: 3, lastVisitMS: 5000)])

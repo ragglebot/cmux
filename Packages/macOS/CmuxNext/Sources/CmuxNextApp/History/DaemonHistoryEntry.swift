@@ -33,6 +33,36 @@ struct DaemonHistoryEntry: Decodable, Sendable, Equatable {
 
     var time: Date { Date(timeIntervalSince1970: atMS / 1_000) }
 
+    init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        kind = try c.decode(HistoryEntry.Kind.self, forKey: .kind)
+        atMS = try c.decodeCatalogNumber(forKey: .atMS)
+        title = try c.decode(String.self, forKey: .title)
+        detail = try c.decodeIfPresent(String.self, forKey: .detail)
+        machine = try c.decodeIfPresent(String.self, forKey: .machine)
+        workspace = try c.decodeIfPresent(String.self, forKey: .workspace)
+        available = try c.decode(Bool.self, forKey: .available)
+        current = try c.decodeIfPresent(Bool.self, forKey: .current)
+        running = try c.decodeIfPresent(Bool.self, forKey: .running)
+        url = try c.decodeIfPresent(String.self, forKey: .url)
+        profile = try c.decodeIfPresent(String.self, forKey: .profile)
+        closedKind = try c.decodeIfPresent(String.self, forKey: .closedKind)
+        cwd = try c.decodeIfPresent(String.self, forKey: .cwd)
+        command = try c.decodeIfPresent(String.self, forKey: .command)
+        exitCode = try c.decodeCatalogNumberIfPresent(forKey: .exitCode).map { Int($0) }
+        sessionID = try c.decodeIfPresent(String.self, forKey: .sessionID)
+        provider = try c.decodeIfPresent(String.self, forKey: .provider)
+    }
+
+    init(id: String, kind: HistoryEntry.Kind, atMS: Double, title: String, available: Bool) {
+        self.id = id
+        self.kind = kind
+        self.atMS = atMS
+        self.title = title
+        self.available = available
+    }
+
     /// The app's entry for the restore paths (history.open, palette pages). Locations are nil: the
     /// app owns the trail and reads its own entries.
     func historyEntry() -> HistoryEntry? {
@@ -83,5 +113,37 @@ struct DaemonVisitSummary: Decodable, Sendable, Equatable {
         case url, title
         case visitCount = "visit_count"
         case lastVisitMS = "last_visit_ms"
+    }
+
+    init(url: String, title: String?, visitCount: Int, lastVisitMS: Double) {
+        self.url = url
+        self.title = title
+        self.visitCount = visitCount
+        self.lastVisitMS = lastVisitMS
+    }
+
+    init(from decoder: any Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        url = try c.decode(String.self, forKey: .url)
+        title = try c.decodeIfPresent(String.self, forKey: .title)
+        visitCount = Int(try c.decodeCatalogNumber(forKey: .visitCount))
+        lastVisitMS = try c.decodeCatalogNumber(forKey: .lastVisitMS)
+    }
+}
+
+/// The v2 catalog sends 64-bit integers as decimal strings (and smaller ones as numbers): accept both.
+extension KeyedDecodingContainer {
+    func decodeCatalogNumber(forKey key: Key) throws -> Double {
+        if let number = try? decode(Double.self, forKey: key) { return number }
+        let text = try decode(String.self, forKey: key)
+        guard let number = Double(text) else {
+            throw DecodingError.dataCorruptedError(forKey: key, in: self, debugDescription: "not a decimal: \(text)")
+        }
+        return number
+    }
+
+    func decodeCatalogNumberIfPresent(forKey key: Key) throws -> Double? {
+        guard contains(key), try !decodeNil(forKey: key) else { return nil }
+        return try decodeCatalogNumber(forKey: key)
     }
 }
