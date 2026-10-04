@@ -1,5 +1,5 @@
 // This file is generated. Do not edit by hand.
-// cmux-tui mux protocol 12, IR 84a8bdedab4401d4d1a43451141a2dfe7029536563f6701d04ae2d02374fc8c2.
+// cmux-tui mux protocol 12, IR c91dd2d2bf9183f81d3c11d35e99d71664e070645441b235036ba1aafb0e3e84.
 // The emitter owns this layout so generation is independent of the installed rustfmt.
 
 use super::metadata::*;
@@ -1444,6 +1444,27 @@ pub struct MoveWorkspaceToGroupRequest {
 
 #[rustfmt::skip]
 pub type MoveWorkspaceToGroupResult = T::JsonValue;
+
+#[rustfmt::skip]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct NewAppTabRequest {
+    pub app: String,
+    #[serde(default, skip_serializing_if = "Optional::is_missing")]
+    pub cols: Optional<u16>,
+    #[serde(default, skip_serializing_if = "Optional::is_missing")]
+    pub idempotency_key: Optional<String>,
+    #[serde(default, skip_serializing_if = "Optional::is_missing")]
+    pub pane: Optional<T::Id>,
+    #[serde(default, skip_serializing_if = "Optional::is_missing")]
+    pub route: Optional<String>,
+    #[serde(default, skip_serializing_if = "Optional::is_missing")]
+    pub rows: Optional<u16>,
+    #[serde(default, skip_serializing_if = "Optional::is_missing")]
+    pub workspace: Optional<T::Id>,
+}
+
+#[rustfmt::skip]
+pub type NewAppTabResult = T::JsonValue;
 
 #[rustfmt::skip]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -3405,6 +3426,10 @@ impl CmuxClient {
 
     pub fn move_workspace_to_group(&mut self, request: MoveWorkspaceToGroupRequest) -> Result<MoveWorkspaceToGroupResult> {
         self.execute(&MOVE_WORKSPACE_TO_GROUP_METADATA, &request)
+    }
+
+    pub fn new_app_tab(&mut self, request: NewAppTabRequest) -> Result<NewAppTabResult> {
+        self.execute(&NEW_APP_TAB_METADATA, &request)
     }
 
     pub fn new_browser_tab(&mut self, request: NewBrowserTabRequest) -> Result<NewBrowserTabResult> {

@@ -289,7 +289,8 @@ fn ensure_app_creates_one_app_workspace_per_app_and_replays() {
         json!({"app": "has space", "kind": "app"}),
         json!({"kind": "app"}),
     ] {
-        let refused = wire.v2("workspace.ensure_app", params.clone(), Some("k2"));
+        let key = format!("k2-{}", params["app"]);
+        let refused = wire.v2("workspace.ensure_app", params.clone(), Some(&key));
         assert_eq!(refused["error"]["code"], "validation.invalid", "{params}: {refused}");
     }
     wire.mux.shutdown();
@@ -542,14 +543,16 @@ fn home_migration_is_idempotent_and_survives_restart() {
     let home_id = home["value"]["workspace_id"].as_str().unwrap().to_string();
     let home_slot = wire.workspace_slot(&home_id);
     let mut conversations = Vec::new();
+    let mut second = 0;
     for (index, conversation) in ["conv_01A", "conv_01B"].into_iter().enumerate() {
         let created = wire.ok(json!({"cmd": "new-conversation-tab", "workspace": home_slot,
                                     "conversation": conversation, "owner": "local",
                                     "origin": "home-test", "mutation_id": format!("c{index}")}));
-        conversations.push(created["surface"].as_u64().unwrap());
+        conversations.push(created["tab_resource_id"].as_str().unwrap().to_string());
+        second = created["surface"].as_u64().unwrap();
     }
-    let split = wire.pane_of(conversations[1]);
-    wire.ok(json!({"cmd": "move-tab-to-column", "surface": conversations[1], "pane": split}));
+    let split = wire.pane_of(second);
+    wire.ok(json!({"cmd": "move-tab-to-column", "surface": second, "pane": split}));
 
     let migrate = json!({"screen": "appColumn", "app": HOME});
     let first = wire.v2_ok("workspace.ensure_home", migrate.clone(), Some("connect-2"));
@@ -574,8 +577,11 @@ fn home_migration_is_idempotent_and_survives_restart() {
         let tabs = tabs(&screen);
         assert_eq!(tabs.len(), 3, "{screen}");
         assert_eq!(tabs.iter().filter(|tab| tab["kind"] == "app").count(), 1);
-        for surface in &conversations {
-            assert!(tabs.iter().any(|tab| tab["surface"] == json!(surface)), "lost {surface}");
+        for tab_id in &conversations {
+            assert!(
+                tabs.iter().any(|tab| tab["tab_resource_id"] == json!(tab_id)),
+                "lost {tab_id}"
+            );
         }
         layout_fingerprint(&screen)
     };

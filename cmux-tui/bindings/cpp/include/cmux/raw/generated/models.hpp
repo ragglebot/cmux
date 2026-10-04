@@ -14,7 +14,7 @@
 namespace cmux::raw {
 
 inline constexpr std::uint32_t kMuxProtocolVersion = 12U;
-inline constexpr std::string_view kProtocolIrSha256 = "84a8bdedab4401d4d1a43451141a2dfe7029536563f6701d04ae2d02374fc8c2";
+inline constexpr std::string_view kProtocolIrSha256 = "c91dd2d2bf9183f81d3c11d35e99d71664e070645441b235036ba1aafb0e3e84";
 
 struct AgentRecord;
 enum class AgentReportSource;
@@ -281,6 +281,7 @@ struct MoveTerminalRequest;
 struct MoveWorkspaceRequest;
 struct MoveWorkspaceGroupRequest;
 struct MoveWorkspaceToGroupRequest;
+struct NewAppTabRequest;
 struct NewBrowserTabRequest;
 struct NewConversationTabRequest;
 struct NewFrontendBrowserTabRequest;
@@ -457,6 +458,7 @@ enum class IdMappingKind;
 struct LayoutLeaf;
 struct LayoutSplit;
 struct LayoutStack;
+enum class ScreenKind;
 enum class SnapshotRequestResultStatus;
 enum class TabBrowserSource;
 enum class TabBrowserStatus;
@@ -2092,9 +2094,11 @@ enum class TabKind {
     pty,
     browser,
     conversation,
+    app,
 };
 
 struct Tab {
+    std::optional<std::string> app{};
     Field<std::string> browser_error{};
     Field<bool> browser_frames_stalled{};
     std::optional<TabBrowserSource> browser_source{};
@@ -2103,6 +2107,7 @@ struct Tab {
     TabKind kind{};
     std::optional<std::string> name{};
     Field<NotificationMarker> notification{};
+    std::optional<std::string> route{};
     std::optional<std::string> short_id{};
     std::optional<Size> size{};
     std::optional<bool> supports_clear_history_key_fallback{};
@@ -2379,6 +2384,17 @@ struct MoveWorkspaceToGroupRequest {
     Field<std::string> origin{};
     Field<Id> workspace{};
     friend bool operator==(const MoveWorkspaceToGroupRequest&, const MoveWorkspaceToGroupRequest&) = default;
+};
+
+struct NewAppTabRequest {
+    std::string app{};
+    Field<std::uint16_t> cols{};
+    Field<std::string> idempotency_key{};
+    Field<Id> pane{};
+    Field<std::string> route{};
+    Field<std::uint16_t> rows{};
+    Field<Id> workspace{};
+    friend bool operator==(const NewAppTabRequest&, const NewAppTabRequest&) = default;
 };
 
 struct NewBrowserTabRequest {
@@ -3080,10 +3096,17 @@ struct SaveTabGroupRequest {
     friend bool operator==(const SaveTabGroupRequest&, const SaveTabGroupRequest&) = default;
 };
 
+enum class ScreenKind {
+    app,
+    app_column,
+};
+
 struct Screen {
     bool active{};
     Id active_pane{};
+    std::optional<std::string> app{};
     Id id{};
+    std::optional<ScreenKind> kind{};
     Layout layout{};
     std::optional<std::string> name{};
     std::vector<Pane> panes{};
@@ -5679,6 +5702,12 @@ struct Codec<MoveWorkspaceToGroupRequest> {
 };
 
 template <>
+struct Codec<NewAppTabRequest> {
+    static Result<Json> encode(const NewAppTabRequest& value);
+    static Result<NewAppTabRequest> decode(const Json& value);
+};
+
+template <>
 struct Codec<NewBrowserTabRequest> {
     static Result<Json> encode(const NewBrowserTabRequest& value);
     static Result<NewBrowserTabRequest> decode(const Json& value);
@@ -6732,6 +6761,12 @@ template <>
 struct Codec<LayoutStack> {
     static Result<Json> encode(const LayoutStack& value);
     static Result<LayoutStack> decode(const Json& value);
+};
+
+template <>
+struct Codec<ScreenKind> {
+    static Result<Json> encode(const ScreenKind& value);
+    static Result<ScreenKind> decode(const Json& value);
 };
 
 template <>

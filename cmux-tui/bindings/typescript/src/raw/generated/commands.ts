@@ -1,5 +1,5 @@
 /* This file is generated. Do not edit by hand. */
-/* cmux-tui mux protocol 12, IR 84a8bdedab4401d4d1a43451141a2dfe7029536563f6701d04ae2d02374fc8c2. */
+/* cmux-tui mux protocol 12, IR c91dd2d2bf9183f81d3c11d35e99d71664e070645441b235036ba1aafb0e3e84. */
 
 
 import type * as T from "./types.js";
@@ -1006,6 +1006,19 @@ export interface MoveWorkspaceToGroupRequest extends CmuxRequestBase {
   "workspace"?: (T.Id) | null;
 }
 export type MoveWorkspaceToGroupResult = T.JsonValue;
+
+/** Protocol v12; authority: control. */
+export interface NewAppTabRequest extends CmuxRequestBase {
+  cmd: "new-app-tab";
+  "app": string;
+  "cols"?: (number) | null;
+  "idempotency_key"?: (string) | null;
+  "pane"?: (T.Id) | null;
+  "route"?: (string) | null;
+  "rows"?: (number) | null;
+  "workspace"?: (T.Id) | null;
+}
+export type NewAppTabResult = T.JsonValue;
 
 /** Protocol v5; authority: control. */
 export interface NewBrowserTabRequest extends CmuxRequestBase {
@@ -2109,6 +2122,7 @@ export type CmuxRequest =
   | MoveWorkspaceRequest
   | MoveWorkspaceGroupRequest
   | MoveWorkspaceToGroupRequest
+  | NewAppTabRequest
   | NewBrowserTabRequest
   | NewConversationTabRequest
   | NewFrontendBrowserTabRequest
@@ -3079,6 +3093,14 @@ export interface CmuxCommandDefinitionMap {
     authority: "control";
     since: 12;
     capability: "workspace-groups-v1";
+    stream: null;
+  };
+  "new-app-tab": {
+    request: NewAppTabRequest;
+    result: NewAppTabResult;
+    authority: "control";
+    since: 12;
+    capability: "app-screens-v1";
     stream: null;
   };
   "new-browser-tab": {

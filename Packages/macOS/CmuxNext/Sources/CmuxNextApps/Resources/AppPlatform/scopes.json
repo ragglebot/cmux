@@ -1141,6 +1141,10 @@
       "scope": "tab_group:write",
       "class": "mutation"
     },
+    "tab.create_app": {
+      "scope": "workspace:write",
+      "class": "mutation"
+    },
     "tab.create_browser": {
       "scope": "workspace:write",
       "class": "mutation"
@@ -1446,6 +1450,10 @@
       "class": "mutation"
     },
     "workspace.create": {
+      "scope": "workspace:write",
+      "class": "mutation"
+    },
+    "workspace.ensure_app": {
       "scope": "workspace:write",
       "class": "mutation"
     },

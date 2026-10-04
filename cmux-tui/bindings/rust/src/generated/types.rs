@@ -1,5 +1,5 @@
 // This file is generated. Do not edit by hand.
-// cmux-tui mux protocol 12, IR 84a8bdedab4401d4d1a43451141a2dfe7029536563f6701d04ae2d02374fc8c2.
+// cmux-tui mux protocol 12, IR c91dd2d2bf9183f81d3c11d35e99d71664e070645441b235036ba1aafb0e3e84.
 // The emitter owns this layout so generation is independent of the installed rustfmt.
 
 use crate::{Nullable, Optional};
@@ -1000,11 +1000,24 @@ pub struct RunResult {
 }
 
 #[rustfmt::skip]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum ScreenKind {
+    #[serde(rename = "app")]
+    App,
+    #[serde(rename = "appColumn")]
+    AppColumn,
+}
+
+#[rustfmt::skip]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Screen {
     pub active: bool,
     pub active_pane: Id,
+    #[serde(default, deserialize_with = "crate::presence::deserialize_optional_non_null", skip_serializing_if = "Option::is_none")]
+    pub app: Option<String>,
     pub id: Id,
+    #[serde(default, deserialize_with = "crate::presence::deserialize_optional_non_null", skip_serializing_if = "Option::is_none")]
+    pub kind: Option<ScreenKind>,
     pub layout: Layout,
     pub name: Nullable<String>,
     pub panes: Vec<Pane>,
@@ -1391,11 +1404,15 @@ pub enum TabKind {
     Browser,
     #[serde(rename = "conversation")]
     Conversation,
+    #[serde(rename = "app")]
+    App,
 }
 
 #[rustfmt::skip]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Tab {
+    #[serde(default, deserialize_with = "crate::presence::deserialize_optional_non_null", skip_serializing_if = "Option::is_none")]
+    pub app: Option<String>,
     #[serde(default, skip_serializing_if = "Optional::is_missing")]
     pub browser_error: Optional<String>,
     #[serde(default, skip_serializing_if = "Optional::is_missing")]
@@ -1408,6 +1425,8 @@ pub struct Tab {
     pub name: Nullable<String>,
     #[serde(default, skip_serializing_if = "Optional::is_missing")]
     pub notification: Optional<NotificationMarker>,
+    #[serde(default, deserialize_with = "crate::presence::deserialize_optional_non_null", skip_serializing_if = "Option::is_none")]
+    pub route: Option<String>,
     #[serde(default, deserialize_with = "crate::presence::deserialize_optional_non_null", skip_serializing_if = "Option::is_none")]
     pub short_id: Option<String>,
     pub size: Nullable<Size>,

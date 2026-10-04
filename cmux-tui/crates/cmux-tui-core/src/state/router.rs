@@ -74,6 +74,8 @@ pub(crate) fn handles(operation: ResourceOperation) -> bool {
             | Op::WindowRecordPut
             | Op::WindowRecordDelete
             | Op::WorkspaceEnsureHome
+            | Op::WorkspaceEnsureApp
+            | Op::TabCreateApp
             | Op::WorkspaceStatusList
             | Op::WorkspaceStatusSet
             | Op::WorkspaceStatusClear
@@ -489,16 +491,10 @@ pub(crate) fn dispatch(
                 .map_err(state_error)?;
             state_result(mux, commit)
         }
-        // workspace-kind-v1: the one home workspace, created by the store.
-        Op::WorkspaceEnsureHome => {
+        // workspace-kind-v1 and app-screens-v1 (state/app_screens_router.rs).
+        Op::WorkspaceEnsureHome | Op::WorkspaceEnsureApp | Op::TabCreateApp => {
             ensure_session(mux, selectors)?;
-            let home = mux.state_ensure_home().map_err(state_error)?;
-            mutation_result(
-                mux,
-                json!({"kind": "workspace", "workspace_id": home.workspace_id}),
-                home.revision,
-                home.replayed,
-            )
+            super::app_screens_router::dispatch(mux, &request).map_err(state_error)
         }
         // B4: workspace status
         Op::WorkspaceStatusList => mux.workspace_status_snapshots(selectors).map(Value::Array),

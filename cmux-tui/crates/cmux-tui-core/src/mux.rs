@@ -2962,6 +2962,7 @@ impl Mux {
         );
         let RestoredResourceState { mut state, next_id, contents } =
             restore_resource_state(snapshot, topology)?;
+        crate::state::app_rules::load_screen_apps(&mut state, &registry.connection)?;
         let RestoredPublicProjections {
             default_colors,
             has_terminal_defaults,
@@ -15575,7 +15576,10 @@ impl Mux {
                 // Caller input errors stay visible; spawn failures keep the
                 // generic message.
                 let message = error.to_string();
-                if message.starts_with("bad request") || message.starts_with("terminal_id_exists") {
+                if message.starts_with("bad request")
+                    || message.starts_with("terminal_id_exists")
+                    || crate::state::app_screens_store::raw_error_code(&error).is_some()
+                {
                     return error;
                 }
                 eprintln!("cmux-tui: viewport pane PTY creation failed: {error:#}");
@@ -17492,7 +17496,10 @@ impl Mux {
             {
                 anyhow::bail!("unknown workspace {id}");
             }
-            workspace.or_else(|| state.workspaces.get(state.active_workspace).map(|ws| ws.id))
+            let target =
+                workspace.or_else(|| state.workspaces.get(state.active_workspace).map(|ws| ws.id));
+            crate::state::app_rules::refuse_apply_layout(&state, target)?;
+            target
         };
         let (target_workspace, created_workspace) = match target_workspace {
             Some(workspace) => (workspace, false),

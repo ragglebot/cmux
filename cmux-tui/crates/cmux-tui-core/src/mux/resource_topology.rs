@@ -462,6 +462,7 @@ impl Mux {
             *self.resource_mutation_metrics.lock().unwrap() = Some(plan.metrics);
         }
         let marked = public_id.as_str().to_string();
+        let writes_mark = mark.writes();
         let write_mark = move |tx: &rusqlite::Transaction<'_>| mark.write(tx, &marked, &marked_key);
         let (commit, workspace_revision) = registry.commit_resource_creation_patch(
             correlation_key,
@@ -473,7 +474,7 @@ impl Mux {
             &created_path,
             &plan.deltas,
             plan.workspace_ledger.as_ref(),
-            mark.writes()
+            writes_mark
                 .then_some(&write_mark as crate::workspace_registry::RegistryTransactionWrite<'_>),
         )?;
         plan.apply(&mut state, &commit, workspace_revision);
@@ -1308,6 +1309,7 @@ impl Mux {
                 let first_pane = first.pane.context("pane selector has no live pane")?;
                 let second_pane = second.pane.context("other pane selector has no live pane")?;
                 anyhow::ensure!(first_pane != second_pane, "cannot swap a pane with itself");
+                crate::state::app_rules::refuse_swap(state, first_pane, second_pane)?;
                 let first_id = first.path.pane.context("pane selector has no public id")?;
                 let second_id = second.path.pane.context("other pane selector has no public id")?;
                 let first_screen =
@@ -4071,6 +4073,7 @@ impl Mux {
         let resolved = self
             .resolve_resource_path_in_state(state, registry, target, selectors)
             .map_err(anyhow::Error::new)?;
+        crate::state::app_rules::refuse_effect(state, operation, &resolved, fields)?;
         let mut intent = json!({
             "path":resolved.path,
             "fields":fields,

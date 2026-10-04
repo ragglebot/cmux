@@ -1,5 +1,5 @@
 /* This file is generated. Do not edit by hand. */
-/* cmux-tui mux protocol 12, IR 84a8bdedab4401d4d1a43451141a2dfe7029536563f6701d04ae2d02374fc8c2. */
+/* cmux-tui mux protocol 12, IR c91dd2d2bf9183f81d3c11d35e99d71664e070645441b235036ba1aafb0e3e84. */
 
 
 /** JSON accepted by the wire codec. bigint is serialized as an exact JSON integer. */
@@ -615,7 +615,9 @@ export type RunResult = {
 export type Screen = {
   "active": boolean;
   "active_pane": Id;
+  "app"?: string;
   "id": Id;
+  "kind"?: "app" | "appColumn";
   "layout": Layout;
   "name": (string) | null;
   "panes": Array<Pane>;
@@ -821,14 +823,16 @@ export type SurfaceResult = {
 };
 
 export type Tab = {
+  "app"?: string;
   "browser_error"?: (string) | null;
   "browser_frames_stalled"?: (boolean) | null;
   "browser_source": ("external" | "launched") | null;
   "browser_status"?: ("starting" | "live" | "failed") | null;
   "dead": boolean;
-  "kind": "pty" | "browser" | "conversation";
+  "kind": "pty" | "browser" | "conversation" | "app";
   "name": (string) | null;
   "notification"?: (NotificationMarker) | null;
+  "route"?: string;
   "short_id"?: string;
   "size": (Size) | null;
   "supports_clear_history_key_fallback"?: boolean;
