@@ -16,14 +16,17 @@ struct Wire {
     mux: Arc<Mux>,
     outbound: Arc<BoundedOutbound>,
     writer: MessageWriter,
+    client: u64,
     next_id: u64,
 }
 
 impl Wire {
+    /// A registered connection that declares `app-screens-v1`.
     fn on(mux: Arc<Mux>) -> Self {
         let outbound = Arc::new(BoundedOutbound::default());
         let writer = MessageWriter::new(QueuedSink { outbound: outbound.clone(), control: None });
-        let mut wire = Self { mux, outbound, writer, next_id: 1 };
+        let client = mux.control_clients.register(ClientTransport::Unix, writer.clone());
+        let mut wire = Self { mux, outbound, writer, client, next_id: 1 };
         wire.ok(json!({"cmd": "set-client-info", "capabilities": ["app-screens-v1"]}));
         wire
     }
@@ -36,7 +39,7 @@ impl Wire {
         let id = self.next_id;
         self.next_id += 1;
         request["id"] = json!(id);
-        handle_message(&self.mux, 7, &request.to_string(), &self.writer);
+        handle_message(&self.mux, self.client, &request.to_string(), &self.writer);
         let response: Value = serde_json::from_str(&self.outbound.try_pop().unwrap()).unwrap();
         assert_eq!(response["id"], id, "response must answer the request: {response}");
         response
