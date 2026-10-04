@@ -53,6 +53,26 @@ struct AppScreenMappingTests {
         #expect(handles.columns[LayoutColumnID("column:9")] == DaemonColumnID(rawValue: 9))
     }
 
+    /// The daemon sends an `appColumn` screen with no ordinary column
+    /// without `columns`: it maps to the lone docked app column, so it
+    /// draws chromeless over the screen and takes a tab drop as the first
+    /// column after it.
+    @Test func aLoneAppColumnScreenMapsToItsAppColumn() throws {
+        let screen = ScreenSnapshot(id: 4, layout: .leaf(3), panes: [PaneSnapshot(id: 3, tabs: [TabSnapshot(surface: 5, kind: .app, app: "home")])],
+                                    kind: .appColumn, app: "home")
+        let mapped = try #require(LayoutMapping.shared.map(try workspace([screen]), appScreens: true).screens.first)
+        #expect(mapped.kind == .appColumn("home"))
+        let column = try #require(mapped.layout.columns.first)
+        #expect(mapped.layout.columns.count == 1)
+        #expect(column.id == mapped.implicitColumnID)
+        #expect(column.app == "home")
+        #expect(column.sticky == StickyColumn(edge: .left, mode: .docked))
+        #expect(mapped.layout.chromelessPanes == Set(mapped.layout.panes))
+        let g = ScreenGeometry.compute(mapped.layout, viewport: CGSize(width: 1000, height: 600), style: LayoutStyle(), scale: 2)
+        #expect(DropZoneGeometry.target(atView: CGPoint(x: 500, y: 300), offset: 0, screen: mapped.id, geometry: g, style: LayoutStyle())
+                == .newColumn(screen: mapped.id, after: column.id))
+    }
+
     /// Without `app-screens-v1` the same tree is an ordinary screen with a
     /// pinned column: no kind, no app mark, no chromeless pane.
     @Test func withoutTheCapabilityEveryScreenIsOrdinary() throws {

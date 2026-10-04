@@ -31,6 +31,16 @@ import Testing
         #expect(s.columns.map(\.app) == ["home", nil])
     }
 
+    /// Home with no ordinary column yet: no `columns`, `layout` holds the
+    /// app pane.
+    @Test func aLoneAppColumnScreenHasNoColumns() throws {
+        let s = try screen(#"{"id":1,"layout":{"type":"leaf","pane":2},"kind":"appColumn","app":"home"}"#)
+        #expect(s.kind == .appColumn)
+        #expect(s.app == "home")
+        #expect(s.columns.isEmpty)
+        #expect(s.layout == .leaf(2))
+    }
+
     @Test func anOlderDaemonSendsOrdinaryScreens() throws {
         let s = try screen(#"{"id":1,"layout":{"type":"leaf","pane":2},"columns":[{"id":5,"width":1,"layout":{"type":"leaf","pane":2}}]}"#)
         #expect(s.kind == .workspace)
