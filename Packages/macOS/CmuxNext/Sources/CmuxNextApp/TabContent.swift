@@ -20,7 +20,7 @@ enum TabContent {
     case conversation(HomeHostView)
     /// An app tab (`app-screens-v1`): the app's own page, the same view an
     /// app screen shows (`AppsService.tabView(for:)`).
-    case app(NSView)
+    case app(AppTabView)
 
     var view: NSView {
         switch self {
@@ -48,7 +48,7 @@ enum TabContent {
         case .page(let view): view.focusTarget
         case .placeholder(let view): view
         case .conversation(let view): view.focusTarget
-        case .app(let view): view
+        case .app(let view): view.focusTarget
         }
     }
 }

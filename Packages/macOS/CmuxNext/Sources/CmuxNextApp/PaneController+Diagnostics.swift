@@ -116,7 +116,8 @@ extension PaneController {
             kind = "remote-placeholder"
         case .conversation:
             kind = "conversation"
-        case .app: kind = "app"
+        case .app:
+            kind = "app"
         case .browser(let entry):
             kind = "browser"
             if let reporting = entry.tab as? any BrowserContentVisibilityReporting {

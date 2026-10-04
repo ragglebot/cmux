@@ -30,6 +30,10 @@ struct AppScreenAvailabilityTests {
                    "tab.moveToWorkspace", "moveSurfaceToPaneLeft", "column.dockLeft", "column.undock"] as [ActionID] {
             #expect(AppScreenAvailability.reason(for: id, screen: screen, column: column) == RefusalStrings.appScreenFixed, "\(id)")
         }
+        // Width presets give the app reason, not "Add a second column first".
+        for id in ["column.widthHalf", "column.cycleWidth"] as [ActionID] {
+            #expect(AppScreenAvailability.reason(for: id, screen: screen, column: column) == RefusalStrings.appScreenFixed, "\(id)")
+        }
         // Closing the whole screen stays allowed.
         #expect(AppScreenAvailability.reason(for: "screen.close", screen: screen, column: column) == nil)
     }
@@ -46,7 +50,7 @@ struct AppScreenAvailabilityTests {
 
     @Test func anOrdinaryScreenRefusesNothing() {
         let screen = LayoutScreen(id: "s", name: "", layout: .columns([ordinary]))
-        for id in AppScreenAvailability.appColumnLocked {
+        for id in AppScreenAvailability.appScreenFixed {
             #expect(AppScreenAvailability.reason(for: id, screen: screen, column: ordinary) == nil)
         }
     }
@@ -55,7 +59,7 @@ struct AppScreenAvailabilityTests {
     /// catalog action.
     @Test func everyListedActionExists() {
         let registry = ActionRegistry.standard()
-        for id in AppScreenAvailability.appColumnLocked {
+        for id in AppScreenAvailability.appScreenFixed {
             #expect(registry.action(for: id) != nil, "\(id)")
         }
     }

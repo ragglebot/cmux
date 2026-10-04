@@ -99,6 +99,10 @@ nonisolated enum RefusalStrings {
     static var appScreenFixed: String { text("handlers.refusal.appScreenFixed", "An app screen shows only its app") }
     /// An `appColumn` screen's app column is locked (`app-column-locked`).
     static var appColumnLocked: String { text("handlers.refusal.appColumnLocked", "The app column cannot change") }
+    /// The local daemon cannot make app screens (`app-screens-v1`).
+    static var appScreensUnsupported: String { text("handlers.refusal.appScreensUnsupported", "This session cannot open apps as screens") }
+    /// The app's workspace did not arrive in the tree within the wait.
+    static var appWorkspaceTimedOut: String { text("handlers.refusal.appWorkspaceTimedOut", "The app's workspace did not open in time") }
     static var columnAlreadyHasWidth: String { text("handlers.refusal.columnAlreadyHasWidth", "the column already has that width") }
     static var columnTooNarrowToSplit: String { text("handlers.refusal.columnTooNarrowToSplit", "Not enough room to split this column") }
     static var columnAlreadySticky: String { text("handlers.refusal.columnAlreadySticky", "the column is already sticky there") }

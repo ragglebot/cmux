@@ -24,7 +24,7 @@ final class AppsService {
     private var appPages: [String: AppPanePage] = [:]
     /// App tabs (`app-screens-v1` tab kind `app`) by tab id: their app and
     /// the page view their app's provider mounted (`AppsService+Screens`).
-    var appTabs: [String: (app: String, view: NSView)] = [:]
+    var appTabs: [String: (app: String, view: AppTabView)] = [:]
     /// The App Store tabs (internal page), one store model per tab.
     private(set) lazy var storePages = AppStorePages { [unowned self] in makeStoreModel() }
     /// Runs previews of apps that are not installed (sample data, no grant).
@@ -178,7 +178,5 @@ extension AppsService: InternalPageProvider {
 
 enum AppsServiceError: Error {
     case unknownApp, noPage, noWindow, unknownCommand
-    /// The daemon does not serve `app-screens-v1` (or is not connected).
-    case noAppScreens
 }
 

@@ -10,9 +10,9 @@ import CmuxNextLayout
 /// any other daemon nothing here applies. Closing the screen stays allowed;
 /// the app column keeps its width presets.
 enum AppScreenAvailability {
-    /// Refused on an `app` screen: anything that adds, moves or closes a
-    /// tab, pane or column, or docks one.
-    static let appScreenFixed: [ActionID] = [
+    /// Refused on both targets: anything that adds, moves or closes a tab,
+    /// pane or column, or docks one.
+    static let locked: [ActionID] = [
         "newTab", "newTab.sameKind", "newTab.page", "openBrowser", "openBrowser.webkit", "openBrowser.chromium",
         "duplicateTab", "closeTab", "closePane",
         "splitRight", "splitDown", "splitLeft", "splitUp", "splitBrowserRight", "splitBrowserDown", "newPaneAutoLayout", "newColumn",
@@ -22,14 +22,23 @@ enum AppScreenAvailability {
         "moveSurfaceToPaneUp", "moveSurfaceToPaneDown",
         "swapPaneLeft", "swapPaneRight", "swapPaneUp", "swapPaneDown",
         "column.dock", "column.dockLeft", "column.dockRight", "column.dockTop", "column.dockBottom", "column.undock", "column.float",
+        "column.moveLeft", "column.moveRight",
     ]
 
-    /// Refused on the app column: the same, plus moving the column (it is
-    /// fixed at index 0, sticky left).
-    static let appColumnLocked: [ActionID] = appScreenFixed + ["column.moveLeft", "column.moveRight"]
+    /// Refused on an `app` screen: the locked actions and the width presets
+    /// (the app fills the screen), so the app reason wins over the lone
+    /// column's "Add a second column first".
+    static let appScreenFixed: [ActionID] = locked + [
+        "column.widthOneThird", "column.widthHalf", "column.widthTwoThirds", "column.widthFull",
+        "column.cycleWidth", "column.cycleWidthBack",
+    ]
+
+    /// Refused on the app column (fixed at index 0, sticky left); its width
+    /// presets stay available.
+    static let appColumnLocked: [ActionID] = locked
 
     static func bind(into registry: ActionRegistry, context ctx: AppActionContext) {
-        for id in appColumnLocked {
+        for id in appScreenFixed {
             ActionTargetReasons.add(id, in: registry) { invocation in
                 guard let (screen, column) = ColumnAvailability.resolved(invocation, ctx) else { return nil }
                 return reason(for: id, screen: screen, column: column)
