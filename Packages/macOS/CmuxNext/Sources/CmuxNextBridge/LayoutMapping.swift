@@ -40,7 +40,8 @@ public struct LayoutMapping {
     /// one app column, its only column (the screen's implicit column when
     /// the daemon stores it as one split tree), so the layout draws it
     /// without chrome over the whole screen. An `appColumn` screen keeps the
-    /// daemon's columns; its app column is marked from `columns[].app`.
+    /// daemon's columns, its app column marked from `columns[].app`; sent
+    /// without columns it is the lone app column.
     static func markApp(_ screen: inout LayoutScreen, kind: ScreenKind, app: String?) {
         guard let app else { return }
         switch kind {
@@ -60,6 +61,12 @@ public struct LayoutMapping {
             }
         case .appColumn:
             screen.kind = .appColumn(app)
+            // With no ordinary column yet the daemon sends no `columns`: the
+            // screen is the lone app column, docked left (A2).
+            if case let .splits(root) = screen.layout {
+                screen.layout = .columns([LayoutColumn(id: screen.implicitColumnID, width: 1, root: root,
+                                                       sticky: StickyColumn(edge: .left, mode: .docked), app: app)])
+            }
         }
     }
 
